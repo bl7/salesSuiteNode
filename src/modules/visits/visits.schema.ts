@@ -7,14 +7,17 @@ export const visitSchema = z.object({
   shop_name: z.string().nullable().optional(), // Joined
   rep_company_user_id: z.string().uuid(),
   rep_name: z.string().nullable().optional(), // Joined
-  visit_date: z.date(),
+  visit_date: z.coerce.date(),
+  started_at: z.coerce.date(),
+  ended_at: z.coerce.date().nullable().optional(),
+  status: z.string().optional(),
   latitude: z.number().nullable(),
   longitude: z.number().nullable(),
   notes: z.string().nullable(),
   purpose: z.string().nullable(),
   outcome: z.string().nullable(),
   image_url: z.string().nullable(),
-  created_at: z.date(),
+  created_at: z.coerce.date(),
 });
 
 export const createVisitSchema = z.object({
@@ -29,10 +32,13 @@ export const createVisitSchema = z.object({
 
 export const updateVisitSchema = z.object({
   status: z.enum(['ongoing', 'completed', 'cancelled']).optional(),
+  end: z.boolean().optional(),
   notes: z.string().optional(),
   purpose: z.string().optional(),
   outcome: z.string().optional(),
-  imageUrl: z.string().optional()
+  imageUrl: z.string().optional(),
+  latitude: z.number().optional(),
+  longitude: z.number().optional(),
 });
 
 export const listVisitsQuerySchema = z.object({

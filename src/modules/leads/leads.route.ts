@@ -179,7 +179,7 @@ export async function leadsRoutes(app: FastifyInstance) {
             name: lead.name,
             latitude: 27.7172, // Default lat if lead has no location data
             longitude: 85.3240, // Default long
-            geofenceRadius: 100,
+            geofenceRadiusM: 100,
             notes: `Converted from lead ${lead.id}`
         }, client);
         

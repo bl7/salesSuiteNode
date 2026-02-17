@@ -7,6 +7,9 @@ export interface Visit {
   shop_id: string;
   rep_company_user_id: string;
   visit_date: Date;
+  started_at: Date;
+  ended_at: Date | null;
+  status: string;
   latitude: number | null;
   longitude: number | null;
   notes: string | null;
@@ -94,6 +97,8 @@ export class VisitRepository {
       purpose?: string;
       outcome?: string;
       imageUrl?: string;
+      latitude?: number;
+      longitude?: number;
   }): Promise<Visit | undefined> {
       const updates: string[] = [];
       const values: any[] = [];
@@ -109,6 +114,8 @@ export class VisitRepository {
       if (data.purpose !== undefined) { updates.push(`purpose = $${idx++}`); values.push(data.purpose); }
       if (data.outcome !== undefined) { updates.push(`outcome = $${idx++}`); values.push(data.outcome); }
       if (data.imageUrl !== undefined) { updates.push(`image_url = $${idx++}`); values.push(data.imageUrl); }
+      if (data.latitude !== undefined) { updates.push(`latitude = $${idx++}`); values.push(data.latitude); }
+      if (data.longitude !== undefined) { updates.push(`longitude = $${idx++}`); values.push(data.longitude); }
       
       updates.push(`updated_at = NOW()`);
       

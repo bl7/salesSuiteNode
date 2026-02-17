@@ -99,7 +99,12 @@ export async function visitsRoutes(app: FastifyInstance) {
             return reply.code(403).send({ message: 'Forbidden' });
         }
 
-        const visit = await visitRepository.update(request.params.visitId, context.company.id, request.body);
+        const updateData = { ...request.body };
+        if (updateData.end) {
+            updateData.status = 'completed';
+        }
+
+        const visit = await visitRepository.update(request.params.visitId, context.company.id, updateData);
         if (!visit) return reply.code(404).send({ message: 'Visit not found' });
 
         return { ok: true, visit };

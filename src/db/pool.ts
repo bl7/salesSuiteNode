@@ -9,9 +9,9 @@ const poolConfig: PoolConfig = {
   ssl: {
     rejectUnauthorized: false, // For Aiven and other cloud providers with self-signed certs
   },
-  max: 20, // Max number of clients in the pool
+  max: 5, // Aiven Free tier only allows 5 connections
   idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
+  connectionTimeoutMillis: 5000,
 };
 
 export const pool = new Pool(poolConfig);
