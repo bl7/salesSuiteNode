@@ -131,6 +131,57 @@ export async function ordersRoutes(app: FastifyInstance) {
 
         return { ok: true, order };
     });
+
+    // Update Order
+    app.withTypeProvider<ZodTypeProvider>().patch('/:orderId', {
+        schema: {
+            params: z.object({ orderId: z.string().uuid() }),
+            body: updateOrderSchema,
+            response: {
+                200: z.object({ ok: z.boolean(), order: orderSchema }),
+                404: z.object({ message: z.string() }),
+                401: z.object({ message: z.string() }),
+                500: z.object({ message: z.string() })
+            }
+        }
+    }, async (request, reply) => {
+        const { user } = request;
+        const { authService } = await import('../auth/auth.service');
+        const context = await authService.getContext(user.userId);
+        if (!context) return reply.code(401).send({ message: 'Unauthorized' } as any);
+
+        const order = await orderRepository.findById(request.params.orderId, context.company.id);
+        if (!order) return reply.code(404).send({ message: 'Order not found' });
+        
+        // Check permission if Rep
+        if (context.user.role === 'rep' && order.placed_by_company_user_id !== context.user.companyUserId) {
+             return reply.code(404).send({ message: 'Order not found' });
+        }
+
+        const items = request.body.items?.map(i => ({
+            productId: i.productId,
+            productName: i.productName,
+            productSku: i.productSku,
+            quantity: i.quantity,
+            unitPrice: i.unitPrice,
+            notes: i.notes
+        }));
+
+        try {
+            const updatedOrder = await orderRepository.update(
+                request.params.orderId,
+                context.company.id,
+                {
+                    ...request.body,
+                    items
+                }
+            );
+            return { ok: true, order: updatedOrder };
+        } catch (e) {
+            request.log.error(e);
+            return reply.code(500).send({ message: 'Failed to update order' });
+        }
+    });
     
     // Cancel Order
     app.withTypeProvider<ZodTypeProvider>().post('/:orderId/cancel', {

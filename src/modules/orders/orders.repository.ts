@@ -97,6 +97,92 @@ export class OrderRepository {
       }
   }
 
+
+
+  async update(id: string, companyId: string, data: {
+      items?: {
+          productId: string;
+          productName: string;
+          productSku: string;
+          quantity: number;
+          unitPrice: number;
+          notes?: string;
+      }[];
+      notes?: string;
+      status?: 'received' | 'processing' | 'shipped' | 'closed';
+  }): Promise<Order> {
+    const client = await this.db.connect();
+    try {
+        await client.query('BEGIN');
+
+        // Update main order fields
+        if (data.notes !== undefined || data.status !== undefined) {
+             const updates: string[] = [];
+             const values: any[] = [];
+             let idx = 1;
+
+             if (data.notes !== undefined) {
+                 updates.push(`notes = $${idx++}`);
+                 values.push(data.notes);
+             }
+             if (data.status !== undefined) {
+                 updates.push(`status = $${idx++}`);
+                 values.push(data.status);
+             }
+
+             if (updates.length > 0) {
+                 values.push(id, companyId);
+                 await client.query(`
+                     UPDATE orders 
+                     SET ${updates.join(', ')}, updated_at = NOW()
+                     WHERE id = $${idx++} AND company_id = $${idx++}
+                 `, values);
+             }
+        }
+
+        // Update Items (Full Replace Strategy for simplicity)
+        if (data.items) {
+            // 1. Delete existing items
+            await client.query('DELETE FROM order_items WHERE order_id = $1 AND company_id = $2', [id, companyId]);
+
+            // 2. Insert new items
+            const insertedItems = [];
+            let newTotal = 0;
+
+            for (const item of data.items) {
+                 const lineTotal = item.quantity * item.unitPrice;
+                 newTotal += lineTotal;
+
+                 const itemRes = await client.query(`
+                     INSERT INTO order_items (company_id, order_id, product_id, product_name, product_sku, quantity, unit_price, line_total, notes)
+                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+                     RETURNING *
+                 `, [
+                     companyId, id, item.productId, item.productName, item.productSku, item.quantity, item.unitPrice, 
+                     lineTotal, item.notes
+                 ]);
+                 insertedItems.push(itemRes.rows[0]);
+            }
+
+            // 3. Update Order Total
+            await client.query(`
+                UPDATE orders SET total_amount = $1 WHERE id = $2 AND company_id = $3
+            `, [newTotal, id, companyId]);
+        }
+
+        await client.query('COMMIT');
+
+        // Return updated order
+        return (await this.findById(id, companyId))!; 
+
+    } catch (e) {
+        await client.query('ROLLBACK');
+        throw e;
+    } finally {
+        client.release();
+    }
+  }
+
   async findAll(params: {
       companyId: string;
       status?: string;
