@@ -16,6 +16,9 @@ export interface Shop {
   contact_name: string | null;
   contact_email: string | null;
   contact_phone: string | null;
+  operating_hours: string | null;
+  preferred_visit_days: string | null;
+  payment_status: string | null;
   created_at: Date;
   updated_at: Date;
 }
@@ -35,14 +38,18 @@ export class ShopRepository {
       contactName?: string;
       contactEmail?: string;
       contactPhone?: string;
+      operatingHours?: string;
+      preferredVisitDays?: string;
+      paymentStatus?: string;
   }, client?: PoolClient): Promise<Shop> {
       const query = `
           INSERT INTO shops (
             company_id, name, latitude, longitude, geofence_radius_m, 
             external_shop_code, notes, address, contact_name, contact_email, contact_phone, 
+            operating_hours, preferred_visit_days, payment_status,
             is_active
           )
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, true)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, true)
           RETURNING *
       `;
       const result = await (client || this.db).query(query, [
@@ -56,7 +63,10 @@ export class ShopRepository {
           data.address,
           data.contactName,
           data.contactEmail,
-          data.contactPhone
+          data.contactPhone,
+          data.operatingHours,
+          data.preferredVisitDays,
+          data.paymentStatus
       ]);
       return result.rows[0];
   }
@@ -107,6 +117,9 @@ export class ShopRepository {
       contactName?: string;
       contactEmail?: string;
       contactPhone?: string;
+      operatingHours?: string;
+      preferredVisitDays?: string;
+      paymentStatus?: string;
   }): Promise<Shop | undefined> {
       const updates: string[] = [];
       const values: any[] = [];
@@ -122,11 +135,14 @@ export class ShopRepository {
       if (data.contactName !== undefined) { updates.push(`contact_name = $${idx++}`); values.push(data.contactName); }
       if (data.contactEmail !== undefined) { updates.push(`contact_email = $${idx++}`); values.push(data.contactEmail); }
       if (data.contactPhone !== undefined) { updates.push(`contact_phone = $${idx++}`); values.push(data.contactPhone); }
+      if (data.operatingHours !== undefined) { updates.push(`operating_hours = $${idx++}`); values.push(data.operatingHours); }
+      if (data.preferredVisitDays !== undefined) { updates.push(`preferred_visit_days = $${idx++}`); values.push(data.preferredVisitDays); }
+      if (data.paymentStatus !== undefined) { updates.push(`payment_status = $${idx++}`); values.push(data.paymentStatus); }
       
       updates.push(`updated_at = NOW()`);
 
-      values.push(id);
-      values.push(companyId);
+      const shopIdVal = id;
+      const compIdVal = companyId;
 
       const query = `
         UPDATE shops
@@ -134,6 +150,9 @@ export class ShopRepository {
         WHERE id = $${idx++} AND company_id = $${idx++}
         RETURNING *
       `;
+
+      values.push(shopIdVal);
+      values.push(compIdVal);
       
       const result = await this.db.query(query, values);
       return result.rows[0];

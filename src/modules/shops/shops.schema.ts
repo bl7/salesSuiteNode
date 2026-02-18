@@ -14,6 +14,9 @@ export const shopSchema = z.object({
   contact_name: z.string().nullable(),
   contact_email: z.string().nullable(),
   contact_phone: z.string().nullable(),
+  operating_hours: z.string().nullable(),
+  preferred_visit_days: z.string().nullable(),
+  payment_status: z.string().nullable(),
   assignment_count: z.number().int().optional(), // Joined
   created_at: z.coerce.date(),
 });
@@ -29,6 +32,9 @@ export const createShopSchema = z.object({
   contactName: z.string().optional(),
   contactEmail: z.string().optional(),
   contactPhone: z.string().optional(),
+  operatingHours: z.string().optional(),
+  preferredVisitDays: z.string().optional(),
+  paymentStatus: z.string().optional(),
 });
 
 export const updateShopSchema = z.object({
@@ -42,6 +48,9 @@ export const updateShopSchema = z.object({
   contactName: z.string().optional(),
   contactEmail: z.string().optional(),
   contactPhone: z.string().optional(),
+  operatingHours: z.string().optional(),
+  preferredVisitDays: z.string().optional(),
+  paymentStatus: z.string().optional(),
 });
 
 export const listShopsQuerySchema = z.object({
