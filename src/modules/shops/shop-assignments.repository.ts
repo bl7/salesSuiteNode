@@ -15,10 +15,17 @@ export class ShopAssignmentRepository {
 
   async findAll(companyId: string): Promise<ShopAssignment[]> {
     const query = `
-      SELECT id, shop_id, rep_company_user_id, is_primary, assigned_at
-      FROM shop_assignments
-      WHERE company_id = $1
-      ORDER BY assigned_at DESC
+      SELECT 
+        sa.id, 
+        sa.shop_id, 
+        sa.rep_company_user_id, 
+        sa.is_primary, 
+        sa.assigned_at,
+        s.name as shop_name
+      FROM shop_assignments sa
+      JOIN shops s ON sa.shop_id = s.id
+      WHERE sa.company_id = $1
+      ORDER BY sa.assigned_at DESC
     `;
     const result = await this.db.query(query, [companyId]);
     return result.rows;

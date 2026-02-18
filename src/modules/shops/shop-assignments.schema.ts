@@ -6,6 +6,7 @@ export const shopAssignmentSchema = z.object({
   rep_company_user_id: z.string().uuid(),
   is_primary: z.boolean(),
   assigned_at: z.date(),
+  shop_name: z.string().optional(),
 });
 
 export const createAssignmentSchema = z.object({
