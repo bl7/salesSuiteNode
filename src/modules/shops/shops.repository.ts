@@ -29,8 +29,8 @@ export class ShopRepository {
   async create(data: {
       companyId: string;
       name: string;
-      latitude?: number;
-      longitude?: number;
+      latitude?: number | null;
+      longitude?: number | null;
       geofenceRadiusM: number;
       externalShopCode?: string;
       notes?: string;
@@ -111,8 +111,8 @@ export class ShopRepository {
       isActive?: boolean; 
       notes?: string; 
       geofenceRadiusM?: number; 
-      latitude?: number; 
-      longitude?: number;
+      latitude?: number | null; 
+      longitude?: number | null;
       address?: string;
       contactName?: string;
       contactEmail?: string;

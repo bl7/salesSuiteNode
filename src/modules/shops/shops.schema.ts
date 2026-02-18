@@ -23,8 +23,8 @@ export const shopSchema = z.object({
 
 export const createShopSchema = z.object({
   name: z.string().min(1),
-  latitude: z.number().min(-90).max(90).optional(),
-  longitude: z.number().min(-180).max(180).optional(),
+  latitude: z.number().min(-90).max(90).optional().nullable(),
+  longitude: z.number().min(-180).max(180).optional().nullable(),
   geofenceRadiusM: z.number().positive().default(100),
   externalShopCode: z.string().optional(),
   notes: z.string().optional(),
@@ -42,8 +42,8 @@ export const updateShopSchema = z.object({
   isActive: z.boolean().optional(),
   notes: z.string().optional(),
   geofenceRadiusM: z.number().positive().optional(),
-  latitude: z.number().min(-90).max(90).optional(),
-  longitude: z.number().min(-180).max(180).optional(),
+  latitude: z.number().min(-90).max(90).optional().nullable(),
+  longitude: z.number().min(-180).max(180).optional().nullable(),
   address: z.string().optional(),
   contactName: z.string().optional(),
   contactEmail: z.string().optional(),

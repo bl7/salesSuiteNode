@@ -2,10 +2,10 @@ import { z } from 'zod';
 
 export const orderItemSchema = z.object({
   id: z.string().uuid(),
-  product_id: z.string().uuid().optional(),
+  product_id: z.string().uuid().optional().nullable(),
   product_name: z.string(),
-  product_sku: z.string(),
-  quantity: z.number(),
+  product_sku: z.string().nullable(),
+  quantity: z.union([z.number(), z.string()]),
   unit_price: z.union([z.number(), z.string()]),
   line_total: z.union([z.number(), z.string()]),
   notes: z.string().nullable(),
@@ -30,7 +30,7 @@ export const orderSchema = z.object({
   cancelled_at: z.date().nullable(),
   cancel_reason: z.string().nullable(),
   cancel_note: z.string().nullable(),
-  item_count: z.union([z.number(), z.string()]).optional(), // joined
+  items_count: z.union([z.number(), z.string()]).optional(), // joined
   items: z.array(orderItemSchema).optional() // for details
 });
 

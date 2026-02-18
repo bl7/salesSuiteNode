@@ -177,8 +177,8 @@ export async function leadsRoutes(app: FastifyInstance) {
         const newShop = await shopRepository.create({
             companyId: context.company.id,
             name: lead.name,
-            latitude: 27.7172, // Default lat if lead has no location data
-            longitude: 85.3240, // Default long
+            latitude: lead.latitude ?? undefined, 
+            longitude: lead.longitude ?? undefined, 
             geofenceRadiusM: 100,
             notes: `Converted from lead ${lead.id}`
         }, client);

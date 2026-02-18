@@ -9,6 +9,8 @@ export const leadSchema = z.object({
   phone: z.string().nullable(),
   email: z.string().email().nullable(),
   address: z.string().nullable(),
+  latitude: z.number().nullable(),
+  longitude: z.number().nullable(),
   status: z.enum(['new', 'contacted', 'qualified', 'converted', 'lost']),
   assigned_rep_company_user_id: z.string().uuid().nullable(),
   created_by_company_user_id: z.string().uuid(),
@@ -28,6 +30,8 @@ export const createLeadSchema = z.object({
   phone: z.string().optional().nullable(),
   email: z.string().email().optional().nullable(),
   address: z.string().optional().nullable(),
+  latitude: z.number().min(-90).max(90).optional().nullable(),
+  longitude: z.number().min(-180).max(180).optional().nullable(),
   assignedRepCompanyUserId: z.string().uuid().optional().nullable(),
   notes: z.string().optional().nullable(),
 });
@@ -39,6 +43,8 @@ export const updateLeadSchema = z.object({
   phone: z.string().optional().nullable(),
   email: z.string().email().optional().nullable(),
   address: z.string().optional().nullable(),
+  latitude: z.number().min(-90).max(90).optional().nullable(),
+  longitude: z.number().min(-180).max(180).optional().nullable(),
   assignedRepCompanyUserId: z.string().uuid().optional().nullable(),
   notes: z.string().optional().nullable(),
 });

@@ -33,6 +33,7 @@ export const loginResponseSchema = z.object({
   ok: z.boolean(),
   user: userResponseSchema,
   company: companyResponseSchema,
+  token: z.string(),
 });
 
 // Signup Company

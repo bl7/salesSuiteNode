@@ -10,6 +10,8 @@ export interface Lead {
   phone: string | null;
   email: string | null;
   address: string | null;
+  latitude: number | null;
+  longitude: number | null;
   status: 'new' | 'contacted' | 'qualified' | 'converted' | 'lost';
   assigned_rep_company_user_id: string | null;
   created_by_company_user_id: string;
@@ -34,15 +36,17 @@ export class LeadsRepository {
     phone?: string | null;
     email?: string | null;
     address?: string | null;
+    latitude?: number | null;
+    longitude?: number | null;
     assignedRepCompanyUserId?: string | null;
     notes?: string | null;
   }, client?: PoolClient): Promise<Lead> {
     const query = `
       INSERT INTO leads (
         company_id, created_by_company_user_id, name, shop_id, contact_name, phone, email, address, 
-        assigned_rep_company_user_id, notes, status, created_at, updated_at
+        latitude, longitude, assigned_rep_company_user_id, notes, status, created_at, updated_at
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'new', NOW(), NOW())
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 'new', NOW(), NOW())
       RETURNING *
     `;
     const result = await (client || this.db).query(query, [
@@ -54,6 +58,8 @@ export class LeadsRepository {
       data.phone,
       data.email,
       data.address,
+      data.latitude,
+      data.longitude,
       data.assignedRepCompanyUserId,
       data.notes
     ]);
@@ -124,6 +130,8 @@ export class LeadsRepository {
     notes?: string | null;
     convertedAt?: Date | null;
     shopId?: string | null;
+    latitude?: number | null;
+    longitude?: number | null;
   }, client?: PoolClient): Promise<Lead | undefined> {
       // Build dynamic update
       const updates: string[] = [];
@@ -136,6 +144,8 @@ export class LeadsRepository {
       if (data.phone !== undefined) { updates.push(`phone = $${idx++}`); values.push(data.phone); }
       if (data.email !== undefined) { updates.push(`email = $${idx++}`); values.push(data.email); }
       if (data.address !== undefined) { updates.push(`address = $${idx++}`); values.push(data.address); }
+      if (data.latitude !== undefined) { updates.push(`latitude = $${idx++}`); values.push(data.latitude); }
+      if (data.longitude !== undefined) { updates.push(`longitude = $${idx++}`); values.push(data.longitude); }
       if (data.assignedRepCompanyUserId !== undefined) { updates.push(`assigned_rep_company_user_id = $${idx++}`); values.push(data.assignedRepCompanyUserId); }
       if (data.notes !== undefined) { updates.push(`notes = $${idx++}`); values.push(data.notes); }
       if (data.convertedAt !== undefined) { updates.push(`converted_at = $${idx++}`); values.push(data.convertedAt); }

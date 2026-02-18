@@ -58,7 +58,10 @@ export async function authRoutes(app: FastifyInstance) {
       maxAge: 7 * 24 * 60 * 60, // 7 days
     });
 
-    return user;
+    return {
+      ...user,
+      token
+    };
   });
 
   // Signup Company

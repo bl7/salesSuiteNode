@@ -107,7 +107,8 @@ export async function shopsRoutes(app: FastifyInstance) {
         const context = await authService.getContext(user.userId);
         if (!context) return reply.code(401).send({ message: 'Unauthorized' });
         
-        if (context.user.role === 'rep') return reply.code(403).send({ message: 'Forbidden' });
+        // Reps are allowed to update shops (e.g. fixing location)
+
 
         const shop = await shopRepository.update(request.params.shopId, context.company.id, request.body);
         if (!shop) return reply.code(404).send({ message: 'Shop not found' });

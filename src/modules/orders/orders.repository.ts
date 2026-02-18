@@ -22,7 +22,7 @@ export interface Order {
   // Joined
   shop_name?: string | null;
   placed_by_name?: string | null;
-  item_count?: number;
+  items_count?: number;
   items?: any[];
 }
 
@@ -108,7 +108,7 @@ export class OrderRepository {
   }): Promise<Order[]> {
       let query = `
           SELECT o.*, s.name as shop_name, u.full_name as placed_by_name,
-                 (SELECT count(*)::int FROM order_items oi WHERE oi.order_id = o.id) as item_count
+                 (SELECT count(*)::int FROM order_items oi WHERE oi.order_id = o.id) as items_count
           FROM orders o
           LEFT JOIN shops s ON o.shop_id = s.id
           LEFT JOIN company_users cu ON o.placed_by_company_user_id = cu.id
