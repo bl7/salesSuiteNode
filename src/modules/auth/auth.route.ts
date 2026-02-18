@@ -159,7 +159,7 @@ export async function authRoutes(app: FastifyInstance) {
           }
       }
   }, async (request, reply) => {
-      reply.clearCookie('access_token');
+      reply.clearCookie('kora_session', { path: '/' });
       return { ok: true, message: 'Logged out' };
   });
 }

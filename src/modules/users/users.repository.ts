@@ -6,6 +6,7 @@ export interface User {
   email: string;
   full_name: string;
   password_hash: string;
+  is_platform_admin: boolean;
   email_verified_at: Date | null;
   last_login_at: Date | null;
   created_at: Date;

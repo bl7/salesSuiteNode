@@ -112,7 +112,8 @@ export class AuthService {
         phone: companyUser.phone,
         role: companyUser.role,
         companyUserId: companyUser.id,
-        status: companyUser.status
+        status: companyUser.status,
+        isPlatformAdmin: user.is_platform_admin
       },
       company: {
         id: company.id,
@@ -205,7 +206,8 @@ export class AuthService {
         phone: companyUser.phone,
         role: companyUser.role,
         companyUserId: companyUser.id,
-        status: companyUser.status
+        status: companyUser.status,
+        isPlatformAdmin: user.is_platform_admin
       },
       company: {
         id: company.id,

@@ -4,14 +4,16 @@ import { env } from '../config/env';
 // Remove sslmode from connection string as we'll configure SSL separately
 const connectionString = env.DATABASE_URL.replace(/[?&]sslmode=\w+/, '');
 
+const isLocal = connectionString.includes('localhost') || connectionString.includes('127.0.0.1');
+
 const poolConfig: PoolConfig = {
   connectionString,
-  ssl: {
-    rejectUnauthorized: false, // For Aiven and other cloud providers with self-signed certs
+  ssl: isLocal ? false : {
+    rejectUnauthorized: false,
   },
-  max: 5, // Aiven Free tier only allows 5 connections
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 5000,
+  max: 25, // Optimized for VPS (Adjust based on your VPS RAM/CPU)
+  idleTimeoutMillis: 60000, // Keep idle connections open longer to reduce handshake overhead
+  connectionTimeoutMillis: 15000, // 15s timeout for initial connection over WAN
 };
 
 export const pool = new Pool(poolConfig);

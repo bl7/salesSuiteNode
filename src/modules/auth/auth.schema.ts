@@ -9,6 +9,7 @@ const userResponseSchema = z.object({
   role: z.string(),
   companyUserId: z.string().uuid(),
   status: z.string().optional(),
+  isPlatformAdmin: z.boolean().optional(),
 });
 
 const companyResponseSchema = z.object({
