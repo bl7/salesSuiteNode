@@ -28,7 +28,12 @@ export class CompanyRepository {
   }
 
   async findById(id: string, client?: PoolClient): Promise<Company | undefined> {
-    const query = 'SELECT * FROM companies WHERE id = $1';
+    const query = `
+      SELECT c.*, 
+             (SELECT COUNT(*)::int FROM company_users WHERE company_id = c.id) as staff_count
+      FROM companies c 
+      WHERE c.id = $1
+    `;
     const result = await (client || this.db).query(query, [id]);
     return result.rows[0];
   }

@@ -72,6 +72,11 @@ export async function staffRoutes(app: FastifyInstance) {
             return reply.code(403).send({ message: 'Insufficient permissions' });
         }
 
+        const totalAllowed = (context.company.staffLimit || 0) + 1;
+        if ((context.company.staffCount || 0) >= totalAllowed) {
+            return reply.code(400).send({ message: 'Staff limit reached. Please upgrade your plan or deactivate existing staff to add more.' });
+        }
+
         // Check if user exists
         const existingUser = await userRepository.findByEmail(request.body.email);
         if (existingUser) {
