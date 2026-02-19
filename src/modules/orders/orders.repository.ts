@@ -211,7 +211,7 @@ export class OrderRepository {
       if (params.dateFrom) { query += ` AND o.placed_at >= $${idx++}`; values.push(params.dateFrom); }
       if (params.dateTo) { query += ` AND o.placed_at <= $${idx++}`; values.push(params.dateTo); }
       if (params.q) {
-          query += ` AND (o.order_number ILIKE $${idx} OR s.name ILIKE $${idx})`;
+          query += ` AND (o.order_number ILIKE $${idx} OR s.name ILIKE $${idx} OR EXISTS (SELECT 1 FROM order_items oi WHERE oi.order_id = o.id AND (oi.product_name ILIKE $${idx} OR oi.product_sku ILIKE $${idx})))`;
           values.push(`%${params.q}%`);
           idx++;
       }
