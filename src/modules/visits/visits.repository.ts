@@ -54,7 +54,6 @@ export class VisitRepository {
       isVerified?: boolean;
       distanceM?: number | null;
       verificationMethod?: string;
-      // verifiedAt removed as column missing in DB
       exceptionReason?: string | null;
       exceptionNote?: string | null;
       startedAt?: string;
@@ -62,9 +61,9 @@ export class VisitRepository {
       const query = `
           INSERT INTO visits (
               company_id, shop_id, rep_company_user_id, started_at, latitude, longitude, notes, purpose, outcome, image_url, status,
-              is_verified, distance_m, verification_method, gps_accuracy_m, exception_reason, exception_note
+              is_verified, distance_m, verification_method, gps_accuracy_m, exception_reason, exception_note, verified_at
           )
-          VALUES ($1, $2, $3, COALESCE($16, NOW()), $4, $5, $6, $7, $8, $9, 'ongoing', $10, $11, $12, $13, $14, $15)
+          VALUES ($1, $2, $3, COALESCE($16, NOW()), $4, $5, $6, $7, $8, $9, 'ongoing', $10, $11, $12, $13, $14, $15, CASE WHEN $10 THEN COALESCE($16, NOW()) ELSE NULL END)
           RETURNING *, started_at as visit_date
       `;
       const result = await this.db.query(query, [

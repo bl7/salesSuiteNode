@@ -81,6 +81,13 @@ async function initDb() {
         geofence_radius_m INT DEFAULT 100,
         external_shop_code TEXT,
         notes TEXT,
+        address TEXT,
+        contact_name TEXT,
+        contact_email TEXT,
+        contact_phone TEXT,
+        operating_hours TEXT,
+        preferred_visit_days TEXT,
+        payment_status TEXT,
         is_active BOOLEAN DEFAULT TRUE,
         created_at TIMESTAMP DEFAULT NOW(),
         updated_at TIMESTAMP DEFAULT NOW()
@@ -160,19 +167,29 @@ async function initDb() {
       CREATE TABLE IF NOT EXISTS orders (
         id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
         company_id UUID REFERENCES companies(id) ON DELETE CASCADE,
+        order_number TEXT UNIQUE,
         shop_id UUID REFERENCES shops(id) ON DELETE SET NULL,
+        lead_id UUID REFERENCES leads(id) ON DELETE SET NULL,
+        placed_by_company_user_id UUID REFERENCES company_users(id) ON DELETE SET NULL,
         rep_company_user_id UUID REFERENCES company_users(id) ON DELETE SET NULL,
+        status TEXT DEFAULT 'received',
         total_amount DECIMAL(10, 2) NOT NULL DEFAULT 0,
-        status TEXT DEFAULT 'pending',
+        currency_code TEXT DEFAULT 'NPR',
         notes TEXT,
+        placed_at TIMESTAMP DEFAULT NOW(),
+        processed_at TIMESTAMP,
+        shipped_at TIMESTAMP,
+        closed_at TIMESTAMP,
+        cancelled_at TIMESTAMP,
+        cancel_reason TEXT,
+        cancel_note TEXT,
         created_at TIMESTAMP DEFAULT NOW(),
         updated_at TIMESTAMP DEFAULT NOW()
       );
     `);
     console.log('Checked/Created orders table');
 
-     // 10. Order Items
-    await client.query('DROP TABLE IF EXISTS order_items CASCADE');
+    // 10. Order Items
     await client.query(`
       CREATE TABLE IF NOT EXISTS order_items (
         id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -181,17 +198,16 @@ async function initDb() {
         product_id UUID REFERENCES products(id) ON DELETE SET NULL,
         product_name TEXT,
         product_sku TEXT,
-        quantity INT NOT NULL,
+        quantity DECIMAL(10, 3) NOT NULL,
         unit_price DECIMAL(10, 2) NOT NULL,
         line_total DECIMAL(10, 2) NOT NULL,
         notes TEXT,
         created_at TIMESTAMP DEFAULT NOW()
       );
     `);
-    console.log('Re-created order_items table');
+    console.log('Checked/Created order_items table');
 
     // 11. Visits
-    await client.query('DROP TABLE IF EXISTS visits CASCADE');
     await client.query(`
       CREATE TABLE IF NOT EXISTS visits (
         id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -224,10 +240,9 @@ async function initDb() {
         updated_at TIMESTAMP DEFAULT NOW()
       );
     `);
-    console.log('Re-created visits table');
+    console.log('Checked/Created visits table');
 
     // 12. Tasks
-    await client.query('DROP TABLE IF EXISTS tasks CASCADE');
     await client.query(`
       CREATE TABLE IF NOT EXISTS tasks (
         id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -243,7 +258,7 @@ async function initDb() {
         updated_at TIMESTAMP DEFAULT NOW()
       );
     `);
-    console.log('Re-created tasks table');
+    console.log('Checked/Created tasks table');
 
     // 13. Attendance
     await client.query(`

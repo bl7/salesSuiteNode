@@ -21,6 +21,7 @@ export interface Order {
   notes: string | null;
   // Joined
   shop_name?: string | null;
+  shop_address?: string | null;
   placed_by_name?: string | null;
   items_count?: number;
   items?: any[];
@@ -193,7 +194,7 @@ export class OrderRepository {
       dateTo?: string;
   }): Promise<Order[]> {
       let query = `
-          SELECT o.*, s.name as shop_name, u.full_name as placed_by_name,
+          SELECT o.*, s.name as shop_name, s.address as shop_address, u.full_name as placed_by_name,
                  (SELECT count(*)::int FROM order_items oi WHERE oi.order_id = o.id) as items_count
           FROM orders o
           LEFT JOIN shops s ON o.shop_id = s.id
@@ -223,7 +224,14 @@ export class OrderRepository {
 
   async findById(id: string, companyId: string): Promise<Order | undefined> {
       const query = `
-          SELECT o.*, s.name as shop_name, u.full_name as placed_by_name
+          SELECT 
+              o.id, o.company_id, o.order_number, o.shop_id, o.lead_id, 
+              o.placed_by_company_user_id, o.status, o.total_amount, 
+              o.currency_code, o.notes, o.placed_at, o.processed_at, 
+              o.shipped_at, o.closed_at, o.cancelled_at, o.cancel_reason, 
+              o.cancel_note, o.created_at, o.updated_at,
+              s.name as shop_name, s.address as shop_address, 
+              u.full_name as placed_by_name
           FROM orders o
           LEFT JOIN shops s ON o.shop_id = s.id
           LEFT JOIN company_users cu ON o.placed_by_company_user_id = cu.id
