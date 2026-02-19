@@ -57,20 +57,22 @@ export class VisitRepository {
       // verifiedAt removed as column missing in DB
       exceptionReason?: string | null;
       exceptionNote?: string | null;
+      startedAt?: string;
   }): Promise<Visit> {
       const query = `
           INSERT INTO visits (
               company_id, shop_id, rep_company_user_id, started_at, latitude, longitude, notes, purpose, outcome, image_url, status,
               is_verified, distance_m, verification_method, gps_accuracy_m, exception_reason, exception_note
           )
-          VALUES ($1, $2, $3, NOW(), $4, $5, $6, $7, $8, $9, 'ongoing', $10, $11, $12, $13, $14, $15)
+          VALUES ($1, $2, $3, COALESCE($16, NOW()), $4, $5, $6, $7, $8, $9, 'ongoing', $10, $11, $12, $13, $14, $15)
           RETURNING *, started_at as visit_date
       `;
       const result = await this.db.query(query, [
           data.companyId, data.shopId, data.repCompanyUserId, data.latitude, data.longitude,
           data.notes, data.purpose, data.outcome, data.imageUrl,
           data.isVerified ?? false, data.distanceM, data.verificationMethod ?? 'none',
-          data.gpsAccuracyM, data.exceptionReason ?? null, data.exceptionNote ?? null
+          data.gpsAccuracyM, data.exceptionReason ?? null, data.exceptionNote ?? null,
+          data.startedAt ?? null
       ]);
       return result.rows[0];
   }
@@ -134,6 +136,7 @@ export class VisitRepository {
       longitude?: number;
       endLat?: number | null;
       endLng?: number | null;
+      endedAt?: string | Date;
       // Manager actions
       approvedByManagerId?: string | null;
       approvedAt?: Date | null;
@@ -147,7 +150,11 @@ export class VisitRepository {
       if (data.status !== undefined) {
           updates.push(`status = $${idx++}`); values.push(data.status);
           if (data.status === 'completed') {
-              updates.push(`ended_at = NOW()`);
+              if (data.endedAt) {
+                  updates.push(`ended_at = $${idx++}`); values.push(data.endedAt);
+              } else {
+                  updates.push(`ended_at = NOW()`);
+              }
           }
       }
       if (data.notes !== undefined) { updates.push(`notes = $${idx++}`); values.push(data.notes); }

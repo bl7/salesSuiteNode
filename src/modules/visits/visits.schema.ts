@@ -54,6 +54,7 @@ export const createVisitSchema = z.object({
   purpose: z.string().optional(),
   outcome: z.string().optional(),
   imageUrl: z.string().optional(),
+  startedAt: z.string().datetime().optional(),
   // Exception fields — sent by mobile when rep is out of range
   exceptionReason: z.enum(EXCEPTION_REASONS).optional(),
   exceptionNote: z.string().optional(),
@@ -70,6 +71,7 @@ export const updateVisitSchema = z.object({
   longitude: z.number().optional(),
   endLatitude: z.number().optional().nullable(),
   endLongitude: z.number().optional().nullable(),
+  endedAt: z.string().datetime().optional(),
   // Manager actions
   approve: z.boolean().optional(),
   flag: z.boolean().optional(),

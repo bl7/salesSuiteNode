@@ -127,7 +127,8 @@ export async function visitsRoutes(app: FastifyInstance) {
             verificationMethod,
 
             exceptionReason,
-            exceptionNote
+            exceptionNote,
+            startedAt: request.body.startedAt
         });
 
         return reply.code(201).send({ ok: true, visit });
