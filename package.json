@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "start": "node dist/server.js",
-    "build": "tsc"
+    "build": "tsc",
+    "migrate": "tsx scripts/migrate.ts"
   },
   "keywords": [],
   "author": "",
@@ -16,10 +17,13 @@
     "@fastify/cors": "^11.2.0",
     "@fastify/env": "^5.0.3",
     "@fastify/jwt": "^10.0.0",
+    "@fastify/multipart": "^9.0.3",
     "bcrypt": "^6.0.0",
+    "csv-parse": "^5.5.5",
     "dotenv": "^17.3.1",
     "fastify": "^5.7.4",
     "fastify-type-provider-zod": "^6.1.0",
+    "geolib": "^3.3.4",
     "nodemailer": "^8.0.1",
     "pg": "^8.18.0",
     "pino": "^10.3.1",

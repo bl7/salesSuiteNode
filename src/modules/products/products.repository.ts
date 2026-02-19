@@ -71,12 +71,13 @@ export class ProductRepository {
     }
   }
 
-  async findAll(companyId: string, params: { q?: string; status?: string }): Promise<Product[]> {
+  async findAll(companyId: string, params: { q?: string; status?: string; page?: number; limit?: number }): Promise<{ products: Product[]; total: number }> {
     let query = `
       SELECT p.*,
              (SELECT price FROM product_prices pp WHERE pp.product_id = p.id AND pp.ends_at IS NULL ORDER BY pp.starts_at DESC LIMIT 1) as current_price,
              (SELECT currency_code FROM product_prices pp WHERE pp.product_id = p.id AND pp.ends_at IS NULL ORDER BY pp.starts_at DESC LIMIT 1) as currency_code,
-             (SELECT count(*)::int FROM order_items oi WHERE oi.product_id = p.id) as order_count
+             (SELECT count(*)::int FROM order_items oi WHERE oi.product_id = p.id) as order_count,
+             COUNT(*) OVER()::int as total_count
       FROM products p
       WHERE p.company_id = $1
     `;
@@ -91,12 +92,26 @@ export class ProductRepository {
     if (params.q) {
         query += ` AND (p.name ILIKE $${idx} OR p.sku ILIKE $${idx})`;
         values.push(`%${params.q}%`);
+        idx++;
     }
 
     query += ` ORDER BY p.name ASC`;
 
+    if (params.page && params.limit) {
+        const offset = (params.page - 1) * params.limit;
+        query += ` LIMIT $${idx++} OFFSET $${idx++}`;
+        values.push(params.limit, offset);
+    }
+
     const result = await this.db.query(query, values);
-    return result.rows;
+    const total = result.rows.length > 0 ? result.rows[0].total_count : 0;
+    
+    const products = result.rows.map(row => {
+        const { total_count, ...rest } = row;
+        return rest as Product;
+    });
+
+    return { products, total };
   }
 
   async findById(id: string, companyId: string): Promise<Product | undefined> {

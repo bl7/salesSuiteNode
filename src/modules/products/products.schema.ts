@@ -34,6 +34,8 @@ export const updateProductSchema = z.object({
 export const listProductsQuerySchema = z.object({
   q: z.string().optional(),
   status: z.enum(['active', 'inactive']).optional(),
+  page: z.coerce.number().int().positive().optional(),
+  limit: z.coerce.number().int().positive().optional(),
 });
 
 export const setPriceSchema = z.object({

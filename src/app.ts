@@ -4,20 +4,25 @@ import fjwt from '@fastify/jwt';
 import fenv from '@fastify/env';
 import cors from '@fastify/cors';
 import cookie from '@fastify/cookie';
+import multipart from '@fastify/multipart';
 import { env } from './config/env';
 import { authRoutes } from './modules/auth/auth.route';
 import { healthRoutes } from './modules/health/health.route';
 import { attendanceRoutes } from './modules/attendance/attendance.route';
 import { leadsRoutes } from './modules/leads/leads.route';
 import { shopsRoutes } from './modules/shops/shops.route';
+import { shopsBulkRoutes } from './modules/shops/shops.bulk.route';
 import { shopAssignmentsRoutes } from './modules/shops/shop-assignments.route';
 import { productsRoutes } from './modules/products/products.route';
+import { productsBulkRoutes } from './modules/products/products.bulk.route';
 import { ordersRoutes } from './modules/orders/orders.route';
 import { visitsRoutes } from './modules/visits/visits.route';
 import { tasksRoutes } from './modules/tasks/tasks.route';
 import { staffRoutes } from './modules/staff/staff.route';
 import { profileRoutes } from './modules/profile/profile.route';
 import { contactRoutes } from './modules/contact/contact.route';
+import { reportsRoutes } from './modules/reports/reports.route';
+import { regionsRoutes } from './modules/regions/regions.route';
 
 export async function buildApp(): Promise<FastifyInstance> {
   const app = Fastify({
@@ -43,6 +48,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   });
 
   await app.register(cookie);
+  await app.register(multipart);
 
   await app.register(fjwt, {
     secret: env.JWT_SECRET,
@@ -64,12 +70,16 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(attendanceRoutes, { prefix: '/api/manager/attendance' });
   await app.register(leadsRoutes, { prefix: '/api/manager/leads' });
   await app.register(shopsRoutes, { prefix: '/api/manager/shops' });
+  await app.register(shopsBulkRoutes, { prefix: '/api/manager/shops' });
   await app.register(shopAssignmentsRoutes, { prefix: '/api/manager/shop-assignments' });
   await app.register(productsRoutes, { prefix: '/api/manager/products' });
+  await app.register(productsBulkRoutes, { prefix: '/api/manager/products' });
   await app.register(ordersRoutes, { prefix: '/api/manager/orders' });
   await app.register(visitsRoutes, { prefix: '/api/manager/visits' });
   await app.register(tasksRoutes, { prefix: '/api/manager/tasks' });
   await app.register(staffRoutes, { prefix: '/api/manager/staff' });
+  await app.register(reportsRoutes, { prefix: '/api/manager/reports' });
+  await app.register(regionsRoutes, { prefix: '/api/manager/regions' });
 
   // Profile
   await app.register(profileRoutes, { prefix: '/api/profile' });

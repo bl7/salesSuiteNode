@@ -122,4 +122,28 @@ export async function tasksRoutes(app: FastifyInstance) {
 
         return { ok: true, task: updatedTask as any };
     });
+
+    // Mark Task Complete
+    app.withTypeProvider<ZodTypeProvider>().post('/:taskId/complete', {
+        schema: {
+            params: z.object({ taskId: z.string().uuid() }),
+            response: {
+                200: z.object({ ok: z.boolean() }),
+                401: z.object({ message: z.string() }),
+                404: z.object({ message: z.string() })
+            }
+        }
+    }, async (request, reply) => {
+        const { user } = request;
+        const { authService } = await import('../auth/auth.service');
+        const context = await authService.getContext(user.userId);
+        if (!context) return reply.code(401).send({ message: 'Unauthorized' });
+
+        const updated = await taskRepository.update(request.params.taskId, context.company.id, {
+            status: 'completed'
+        });
+
+        if (!updated) return reply.code(404).send({ message: 'Task not found' });
+        return { ok: true };
+    });
 }

@@ -24,7 +24,11 @@ export async function productsRoutes(app: FastifyInstance) {
         schema: {
             querystring: listProductsQuerySchema,
             response: {
-                200: z.object({ ok: z.boolean(), products: z.array(productSchema) }),
+                200: z.object({ 
+                    ok: z.boolean(), 
+                    products: z.array(productSchema),
+                    total: z.number().int()
+                }),
                 401: z.object({ message: z.string() })
             }
         }
@@ -34,8 +38,8 @@ export async function productsRoutes(app: FastifyInstance) {
         const context = await authService.getContext(user.userId);
         if (!context) return reply.code(401).send({ message: 'Unauthorized' } as any);
 
-        const products = await productRepository.findAll(context.company.id, request.query);
-        return { ok: true, products };
+        const { products, total } = await productRepository.findAll(context.company.id, request.query);
+        return { ok: true, products, total };
     });
 
     // Create Product

@@ -23,7 +23,11 @@ export async function shopsRoutes(app: FastifyInstance) {
         schema: {
             querystring: listShopsQuerySchema,
             response: {
-                200: z.object({ ok: z.boolean(), shops: z.array(shopSchema) }),
+                200: z.object({ 
+                    ok: z.boolean(), 
+                    shops: z.array(shopSchema),
+                    total: z.number().int()
+                }),
                 401: z.object({ message: z.string() }),
                 501: z.object({ message: z.string() })
             }
@@ -34,11 +38,11 @@ export async function shopsRoutes(app: FastifyInstance) {
         const context = await authService.getContext(user.userId);
         if (!context) return reply.code(401).send({ message: 'Unauthorized' });
 
-        const shops = await shopRepository.findAll({
+        const { shops, total } = await shopRepository.findAll({
             companyId: context.company.id,
             ...request.query
         });
-        return { ok: true, shops };
+        return { ok: true, shops, total };
     });
 
     // Create

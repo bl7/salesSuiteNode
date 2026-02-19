@@ -131,7 +131,15 @@ export class TaskRepository {
 
        if (data.title !== undefined) { updates.push(`title = $${idx++}`); values.push(data.title); }
        if (data.description !== undefined) { updates.push(`description = $${idx++}`); values.push(data.description); }
-       if (data.status !== undefined) { updates.push(`status = $${idx++}`); values.push(data.status); }
+       if (data.status !== undefined) { 
+           updates.push(`status = $${idx++}`); 
+           values.push(data.status); 
+           if (data.status === 'completed') {
+               updates.push(`completed_at = NOW()`);
+           } else {
+               updates.push(`completed_at = NULL`);
+           }
+       }
        if (data.dueDate !== undefined) { updates.push(`due_date = $${idx++}`); values.push(data.dueDate); }
        if (data.leadId !== undefined) { updates.push(`lead_id = $${idx++}`); values.push(data.leadId); }
        if (data.shopId !== undefined) { updates.push(`shop_id = $${idx++}`); values.push(data.shopId); }
