@@ -125,7 +125,7 @@ export async function visitsRoutes(app: FastifyInstance) {
             isVerified,
             distanceM,
             verificationMethod,
-            verifiedAt: isVerified ? new Date() : null,
+
             exceptionReason,
             exceptionNote
         });

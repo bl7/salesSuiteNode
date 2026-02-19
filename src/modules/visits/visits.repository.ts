@@ -54,24 +54,23 @@ export class VisitRepository {
       isVerified?: boolean;
       distanceM?: number | null;
       verificationMethod?: string;
-      verifiedAt?: Date | null;
+      // verifiedAt removed as column missing in DB
       exceptionReason?: string | null;
       exceptionNote?: string | null;
   }): Promise<Visit> {
       const query = `
           INSERT INTO visits (
               company_id, shop_id, rep_company_user_id, started_at, latitude, longitude, notes, purpose, outcome, image_url, status,
-              is_verified, distance_m, verification_method, gps_accuracy_m, exception_reason, exception_note, verified_at
+              is_verified, distance_m, verification_method, gps_accuracy_m, exception_reason, exception_note
           )
-          VALUES ($1, $2, $3, NOW(), $4, $5, $6, $7, $8, $9, 'ongoing', $10, $11, $12, $13, $14, $15, $16)
+          VALUES ($1, $2, $3, NOW(), $4, $5, $6, $7, $8, $9, 'ongoing', $10, $11, $12, $13, $14, $15)
           RETURNING *, started_at as visit_date
       `;
       const result = await this.db.query(query, [
           data.companyId, data.shopId, data.repCompanyUserId, data.latitude, data.longitude,
           data.notes, data.purpose, data.outcome, data.imageUrl,
           data.isVerified ?? false, data.distanceM, data.verificationMethod ?? 'none',
-          data.gpsAccuracyM, data.exceptionReason ?? null, data.exceptionNote ?? null,
-          data.verifiedAt ?? null
+          data.gpsAccuracyM, data.exceptionReason ?? null, data.exceptionNote ?? null
       ]);
       return result.rows[0];
   }
