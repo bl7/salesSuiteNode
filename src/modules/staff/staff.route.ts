@@ -170,4 +170,81 @@ export async function staffRoutes(app: FastifyInstance) {
 
         return { ok: true, staff: updatedStaff };
     });
+    // Resend Invite
+    app.withTypeProvider<ZodTypeProvider>().post('/:staffId/resend-invite', {
+        schema: {
+            params: z.object({ staffId: z.string().uuid() }),
+            response: {
+                 200: z.object({ ok: z.boolean(), message: z.string() }),
+                 400: z.object({ message: z.string() }),
+                 404: z.object({ message: z.string() }),
+                 401: z.object({ message: z.string() }),
+                 403: z.object({ message: z.string() }),
+                 500: z.object({ message: z.string() })
+            }
+        }
+    }, async (request, reply) => {
+        const { user } = request;
+        const { authService } = await import('../auth/auth.service');
+        const context = await authService.getContext(user.userId);
+        if (!context) return reply.code(401).send({ message: 'Unauthorized' });
+
+        if (context.user.role !== 'boss' && context.user.role !== 'manager') {
+             return reply.code(403).send({ message: 'Insufficient permissions' });
+        }
+
+        const staff = await companyUserRepository.findById(request.params.staffId, context.company.id);
+        if (!staff) return reply.code(404).send({ message: 'Staff not found' });
+
+        if (staff.status !== 'invited') {
+             return reply.code(400).send({ message: 'User is already verified and not in invited status' });
+        }
+
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN');
+            
+            // Generate new password
+            const tempPassword = randomBytes(8).toString('hex');
+            const passwordHash = await bcrypt.hash(tempPassword, 10);
+            
+            await client.query('UPDATE users SET password_hash = $1 WHERE id = $2', [passwordHash, staff.user_id]);
+
+            // Delete old tokens and create a new one
+            await client.query(`DELETE FROM email_tokens WHERE user_id = $1 AND token_type = 'email_verify'`, [staff.user_id]);
+
+            // Send Emails
+            const loginUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/login`;
+            
+            await emailService.sendStaffInvitation(
+                staff.email, 
+                staff.full_name, 
+                context.company.name, 
+                tempPassword,
+                loginUrl
+            );
+
+            // Verification Email
+            const verifyToken = randomUUID();
+            const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+            await emailTokenRepository.create({
+                token: verifyToken,
+                userId: staff.user_id,
+                tokenType: 'email_verify',
+                expiresAt
+            }, client);
+
+            await emailService.sendVerificationEmail(staff.email, staff.full_name, verifyToken);
+
+            await client.query('COMMIT');
+            
+            return reply.code(200).send({ ok: true, message: 'Invitation resent' });
+        } catch (e) {
+            await client.query('ROLLBACK');
+            request.log.error(e);
+            return reply.code(500).send({ message: 'Resending invitation failed' } as any);
+        } finally {
+            client.release();
+        }
+    });
 }
