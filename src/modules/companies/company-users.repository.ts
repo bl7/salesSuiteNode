@@ -148,6 +148,11 @@ export class CompanyUserRepository {
           if (shouldRelease) (dbClient as PoolClient).release();
       }
   }
+
+  async delete(id: string, companyId: string, client?: PoolClient): Promise<void> {
+    const query = 'DELETE FROM company_users WHERE id = $1 AND company_id = $2';
+    await (client || this.db).query(query, [id, companyId]);
+  }
 }
 
 export const companyUserRepository = new CompanyUserRepository();

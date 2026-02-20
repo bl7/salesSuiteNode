@@ -247,4 +247,49 @@ export async function staffRoutes(app: FastifyInstance) {
             client.release();
         }
     });
+    // Delete Staff
+    app.withTypeProvider<ZodTypeProvider>().delete('/:staffId', {
+        schema: {
+            params: z.object({ staffId: z.string().uuid() }),
+            response: {
+                 200: z.object({ ok: z.boolean(), message: z.string() }),
+                 400: z.object({ message: z.string() }),
+                 404: z.object({ message: z.string() }),
+                 401: z.object({ message: z.string() }),
+                 403: z.object({ message: z.string() }),
+                 500: z.object({ message: z.string() })
+            }
+        }
+    }, async (request, reply) => {
+        const { user } = request;
+        const { authService } = await import('../auth/auth.service');
+        const context = await authService.getContext(user.userId);
+        if (!context) return reply.code(401).send({ message: 'Unauthorized' });
+
+        if (context.user.role !== 'boss' && context.user.role !== 'manager') {
+             return reply.code(403).send({ message: 'Insufficient permissions' });
+        }
+
+        const staff = await companyUserRepository.findById(request.params.staffId, context.company.id);
+        if (!staff) return reply.code(404).send({ message: 'Staff not found' });
+
+        if (staff.status !== 'invited' && staff.status !== 'inactive') {
+             return reply.code(400).send({ message: 'Only invited or inactive staff can be deleted' });
+        }
+
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN');
+            await companyUserRepository.delete(staff.company_user_id, context.company.id, client);
+            await client.query('DELETE FROM users WHERE id = $1', [staff.user_id]);
+            await client.query('COMMIT');
+            return reply.code(200).send({ ok: true, message: 'Staff deleted successfully' });
+        } catch (e) {
+            await client.query('ROLLBACK');
+            request.log.error(e);
+            return reply.code(500).send({ message: 'Failed to delete staff' } as any);
+        } finally {
+            client.release();
+        }
+    });
 }
