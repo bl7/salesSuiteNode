@@ -1,4 +1,10 @@
-import { Pool, PoolConfig } from 'pg';
+import { Pool, PoolConfig, types } from 'pg';
+
+// Override the default parsing for timestamp without time zone (OID 1114)
+// This forces node-postgres to treat the incoming timestamp as UTC, ignoring the Node server's local timezone.
+types.setTypeParser(1114, function(stringValue) {
+  return new Date(stringValue + "Z");
+});
 import { env } from '../config/env';
 
 // Remove sslmode from connection string as we'll configure SSL separately
