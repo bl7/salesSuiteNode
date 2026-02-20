@@ -19,7 +19,7 @@ const poolConfig: PoolConfig = {
   },
   max: 25, // Optimized for VPS (Adjust based on your VPS RAM/CPU)
   idleTimeoutMillis: 60000, // Keep idle connections open longer to reduce handshake overhead
-  connectionTimeoutMillis: 15000, // 15s timeout for initial connection over WAN
+  connectionTimeoutMillis: 15000, 
 };
 
 export const pool = new Pool(poolConfig);
