@@ -100,6 +100,14 @@ export class AuthService {
     const company = await companyRepository.findById(companyUser.company_id);
     if (!company) return null;
 
+    if (companyUser.status === 'inactive') {
+        throw new Error('Your account has been deactivated. Please contact your administrator.');
+    }
+
+    if (companyUser.status === 'invited') {
+        throw new Error('Please verify your email address to log in. Check your inbox for the verification link.');
+    }
+
     // Update last login
     await userRepository.updateLastLogin(user.id);
 

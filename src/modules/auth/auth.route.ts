@@ -34,16 +34,17 @@ export async function authRoutes(app: FastifyInstance) {
       description: 'Login and set session cookie'
     },
   }, async (request, reply) => {
-    const user = await authService.login(request.body);
+    try {
+      const user = await authService.login(request.body);
 
-    if (!user) {
-      return reply.code(401).send({
-        message: 'Invalid email or password',
-        statusCode: 401
-      });
-    }
+      if (!user) {
+        return reply.code(401).send({
+          message: 'Invalid email or password',
+          statusCode: 401
+        });
+      }
 
-    const token = app.jwt.sign({
+      const token = app.jwt.sign({
       userId: user.user.id,
       companyId: user.company.id,
       companyUserId: user.user.companyUserId,
@@ -58,10 +59,16 @@ export async function authRoutes(app: FastifyInstance) {
       maxAge: 7 * 24 * 60 * 60, // 7 days
     });
 
-    return {
-      ...user,
-      token
-    };
+      return {
+        ...user,
+        token
+      };
+    } catch (error: any) {
+      return reply.code(401).send({
+        message: error.message || 'Login failed',
+        statusCode: 401
+      });
+    }
   });
 
   // Signup Company

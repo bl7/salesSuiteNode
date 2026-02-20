@@ -28,7 +28,8 @@ export const emailService = {
   },
 
   async sendVerificationEmail(email: string, fullName: string, token: string) {
-    const verifyUrl = `https://kora-sand.vercel.app/verify-email?token=${token}`;
+    const backendUrl = process.env.BACKEND_URL || 'https://renderlabels.instalabel.co';
+    const verifyUrl = `${backendUrl}/api/auth/verify-email?token=${token}`;
     const subject = 'Verify your SalesSuite account';
     const text = `Hi ${fullName},\n\nPlease verify your email by clicking the link below:\n\n${verifyUrl}\n\nThis link expires in 24 hours.\n\n— SalesSuite`;
     const html = `
