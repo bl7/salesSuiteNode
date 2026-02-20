@@ -20,6 +20,7 @@ export const shopSchema = z.object({
   region_id: z.string().uuid().nullable().optional(),
   region_name: z.string().nullable().optional(),
   assignment_count: z.number().int().optional(), // Joined
+  is_assigned_to_me: z.boolean().optional(),
   created_at: z.coerce.date(),
 });
 

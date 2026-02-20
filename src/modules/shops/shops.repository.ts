@@ -21,6 +21,7 @@ export interface Shop {
   payment_status: string | null;
   region_id: string | null;
   region_name: string | null; // joined
+  is_assigned_to_me?: boolean; // joined
   created_at: Date;
   updated_at: Date;
 }
@@ -75,11 +76,12 @@ export class ShopRepository {
       return result.rows[0];
   }
 
-  async findAll(params: { companyId: string; q?: string; status?: string; regionId?: string; page?: number; limit?: number }): Promise<{ shops: Shop[]; total: number }> {
+  async findAll(params: { companyId: string; q?: string; status?: string; regionId?: string; page?: number; limit?: number; repCompanyUserId?: string }): Promise<{ shops: Shop[]; total: number }> {
       let query = `
           SELECT 
             s.*, 
             (SELECT count(*)::int FROM shop_assignments sa WHERE sa.shop_id = s.id) as assignment_count,
+            ${params.repCompanyUserId ? `EXISTS(SELECT 1 FROM shop_assignments sa WHERE sa.shop_id = s.id AND sa.rep_company_user_id = $2) as is_assigned_to_me,` : ''}
             r.name as region_name,
             COUNT(*) OVER()::int as total_count
           FROM shops s
@@ -87,7 +89,10 @@ export class ShopRepository {
           WHERE s.company_id = $1
       `;
       const values: any[] = [params.companyId];
-      let idx = 2;
+      if (params.repCompanyUserId) {
+        values.push(params.repCompanyUserId);
+      }
+      let idx = values.length + 1;
 
       if (params.regionId) {
           query += ` AND s.region_id = $${idx++}`;

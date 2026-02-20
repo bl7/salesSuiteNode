@@ -40,6 +40,7 @@ export async function shopsRoutes(app: FastifyInstance) {
 
         const { shops, total } = await shopRepository.findAll({
             companyId: context.company.id,
+            repCompanyUserId: context.user.role === 'rep' ? context.user.companyUserId : undefined,
             ...request.query
         });
         return { ok: true, shops, total };
