@@ -100,3 +100,41 @@ export const flaggedRepsResponseSchema = z.object({
   ok: z.boolean(),
   flagged: z.array(flaggedRepItemSchema),
 });
+
+export const staffReportItemSchema = z.object({
+  rep_id: z.string().uuid(),
+  rep_name: z.string(),
+  orders_count: z.number(),
+  total_sales: z.number(),
+  attendance_count: z.number(),
+  leads_count: z.number(),
+  visit_count: z.number(),
+  compliance_count: z.number(),
+  compliance_approved_count: z.number(),
+  expenses_sum: z.number(),
+});
+
+export const staffReportResponseSchema = z.object({
+  ok: z.boolean(),
+  report: z.array(staffReportItemSchema),
+});
+
+export const staffReportQuerySchema = z.object({
+  dateFrom: z.string().optional(),
+  dateTo: z.string().optional(),
+});
+
+export const staffPerformanceDetailQuerySchema = z.object({
+  repId: z.string().uuid(),
+  dateFrom: z.string().optional(),
+  dateTo: z.string().optional(),
+});
+
+export const staffPerformanceDetailResponseSchema = z.object({
+  ok: z.boolean(),
+  attendance: z.array(z.any()),
+  visits: z.array(z.any()),
+  orders: z.array(z.any()),
+  leads: z.array(z.any()),
+  expenses: z.array(z.any()),
+});

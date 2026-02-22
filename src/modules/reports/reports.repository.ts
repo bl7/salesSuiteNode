@@ -289,6 +289,66 @@ export class ReportsRepository {
     const all = [...r1.rows, ...r2.rows, ...r3.rows];
     return all;
   }
+
+  async getStaffReport(companyId: string, from: Date, to: Date): Promise<StaffReportItem[]> {
+    const fromIso = from.toISOString();
+    const toIso = to.toISOString();
+    
+    const query = `
+      SELECT 
+        cu.id as rep_id,
+        u.full_name as rep_name,
+        COALESCE(o_counts.orders_count, 0)::int as orders_count,
+        COALESCE(o_counts.total_sales, 0)::float as total_sales,
+        COALESCE(a_counts.attendance_count, 0)::int as attendance_count,
+        COALESCE(l_counts.leads_count, 0)::int as leads_count,
+        COALESCE(v_counts.visit_count, 0)::int as visit_count,
+        COALESCE(v_counts.compliance_count, 0)::int as compliance_count,
+        COALESCE(v_counts.compliance_approved_count, 0)::int as compliance_approved_count,
+        COALESCE(e_counts.expenses_sum, 0)::float as expenses_sum
+      FROM company_users cu
+      JOIN users u ON cu.user_id = u.id
+      LEFT JOIN (
+        SELECT placed_by_company_user_id, COUNT(*) as orders_count, SUM(total_amount) as total_sales
+        FROM orders
+        WHERE company_id = $1 AND placed_at >= $2 AND placed_at <= $3
+        GROUP BY placed_by_company_user_id
+      ) o_counts ON o_counts.placed_by_company_user_id = cu.id
+      LEFT JOIN (
+        SELECT rep_company_user_id, COUNT(*) as attendance_count
+        FROM attendance_logs
+        WHERE company_id = $1 AND clock_in_at >= $2 AND clock_in_at <= $3
+        GROUP BY rep_company_user_id
+      ) a_counts ON a_counts.rep_company_user_id = cu.id
+      LEFT JOIN (
+        SELECT created_by_company_user_id, COUNT(*) as leads_count
+        FROM leads
+        WHERE company_id = $1 AND created_at >= $2 AND created_at <= $3
+        GROUP BY created_by_company_user_id
+      ) l_counts ON l_counts.created_by_company_user_id = cu.id
+      LEFT JOIN (
+        SELECT 
+          rep_company_user_id, 
+          COUNT(*) as visit_count,
+          SUM(CASE WHEN exception_reason IS NOT NULL THEN 1 ELSE 0 END) as compliance_count,
+          SUM(CASE WHEN exception_reason IS NOT NULL AND approved_by_manager_id IS NOT NULL THEN 1 ELSE 0 END) as compliance_approved_count
+        FROM visits
+        WHERE company_id = $1 AND started_at >= $2 AND started_at <= $3
+        GROUP BY rep_company_user_id
+      ) v_counts ON v_counts.rep_company_user_id = cu.id
+      LEFT JOIN (
+        SELECT rep_company_user_id, SUM(amount) as expenses_sum
+        FROM expenses
+        WHERE company_id = $1 AND date >= $2 AND date <= $3
+        GROUP BY rep_company_user_id
+      ) e_counts ON e_counts.rep_company_user_id = cu.id
+      WHERE cu.company_id = $1 AND cu.role = 'rep' AND cu.status = 'active'
+      ORDER BY total_sales DESC
+    `;
+    
+    const result = await this.db.query(query, [companyId, fromIso, toIso]);
+    return result.rows;
+  }
 }
 
 export const reportsRepository = new ReportsRepository();
@@ -342,4 +402,17 @@ export interface FlaggedRepItem {
   exception_count: number;
   exception_rate: number;
   detail: string | null;
+}
+
+export interface StaffReportItem {
+  rep_id: string;
+  rep_name: string;
+  orders_count: number;
+  total_sales: number;
+  attendance_count: number;
+  leads_count: number;
+  visit_count: number;
+  compliance_count: number;
+  compliance_approved_count: number;
+  expenses_sum: number;
 }

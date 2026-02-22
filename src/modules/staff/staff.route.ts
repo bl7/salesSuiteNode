@@ -137,6 +137,9 @@ export async function staffRoutes(app: FastifyInstance) {
         } catch (e) {
             await client.query('ROLLBACK');
             request.log.error(e);
+            if ((e as any).code === '23514') {
+                return reply.code(400).send({ message: 'Validation failed: ' + ((e as any).detail || (e as any).message) });
+            }
             return reply.code(500).send({ message: 'Invitation failed' } as any);
         } finally {
             client.release();
@@ -150,6 +153,7 @@ export async function staffRoutes(app: FastifyInstance) {
             body: updateStaffSchema,
             response: {
                  200: z.object({ ok: z.boolean(), staff: staffSchema }),
+                 400: z.object({ message: z.string() }),
                  404: z.object({ message: z.string() }),
                  401: z.object({ message: z.string() }),
                  403: z.object({ message: z.string() })
@@ -165,10 +169,18 @@ export async function staffRoutes(app: FastifyInstance) {
              return reply.code(403).send({ message: 'Insufficient permissions' });
         }
 
-        const updatedStaff = await companyUserRepository.update(request.params.staffId, context.company.id, request.body);
-        if (!updatedStaff) return reply.code(404).send({ message: 'Staff not found' });
+        try {
+            const updatedStaff = await companyUserRepository.update(request.params.staffId, context.company.id, request.body);
+            if (!updatedStaff) return reply.code(404).send({ message: 'Staff not found' });
 
-        return { ok: true, staff: updatedStaff };
+            return { ok: true, staff: updatedStaff };
+        } catch (e) {
+            request.log.error(e);
+            if ((e as any).code === '23514') {
+                return reply.code(400).send({ message: 'Validation failed: ' + ((e as any).detail || (e as any).message) });
+            }
+            throw e;
+        }
     });
     // Resend Invite
     app.withTypeProvider<ZodTypeProvider>().post('/:staffId/resend-invite', {

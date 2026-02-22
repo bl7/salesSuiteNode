@@ -72,6 +72,8 @@ export class LeadsRepository {
     status?: string;
     q?: string;
     createdById?: string; 
+    dateFrom?: string;
+    dateTo?: string;
   }): Promise<Lead[]> {
     let query = `
       SELECT l.*, s.name as shop_name, u.full_name as assigned_rep_name, u2.full_name as created_by_name
@@ -101,6 +103,16 @@ export class LeadsRepository {
     if (params.createdById) {
        query += ` AND l.created_by_company_user_id = $${idx++}`;
        values.push(params.createdById);
+    }
+
+    if (params.dateFrom) {
+      query += ` AND l.created_at >= $${idx++}`;
+      values.push(params.dateFrom);
+    }
+
+    if (params.dateTo) {
+      query += ` AND l.created_at <= $${idx++}`;
+      values.push(params.dateTo);
     }
 
     query += ` ORDER BY l.created_at DESC`;

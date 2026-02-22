@@ -92,6 +92,11 @@ export class AttendanceRepository {
       values.push(params.dateFrom);
     }
 
+    if (params.dateTo) {
+      query += ` AND al.clock_in_at <= $${idx++}`;
+      values.push(params.dateTo);
+    }
+
     const result = await this.db.query(query, values);
     return result.rows;
   }

@@ -5,7 +5,7 @@ export interface CompanyUser {
   id: string;
   company_id: string;
   user_id: string;
-  role: 'boss' | 'manager' | 'rep';
+  role: 'boss' | 'manager' | 'rep' | 'back_office' | 'dispatch_supervisor';
   status: 'active' | 'inactive' | 'invited';
   phone: string | null;
   created_at: Date;
