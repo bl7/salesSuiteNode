@@ -21,6 +21,7 @@ export const leadSchema = z.object({
   // Joined fields
   shop_name: z.string().nullable().optional(),
   assigned_rep_name: z.string().nullable().optional(),
+  created_by_name: z.string().nullable().optional(),
 });
 
 export const createLeadSchema = z.object({

@@ -22,6 +22,7 @@ export interface Lead {
   // Joined
   shop_name?: string | null;
   assigned_rep_name?: string | null;
+  created_by_name?: string | null;
 }
 
 export class LeadsRepository {
@@ -73,11 +74,13 @@ export class LeadsRepository {
     createdById?: string; 
   }): Promise<Lead[]> {
     let query = `
-      SELECT l.*, s.name as shop_name, u.full_name as assigned_rep_name
+      SELECT l.*, s.name as shop_name, u.full_name as assigned_rep_name, u2.full_name as created_by_name
       FROM leads l
       LEFT JOIN shops s ON l.shop_id = s.id
       LEFT JOIN company_users cu ON l.assigned_rep_company_user_id = cu.id
       LEFT JOIN users u ON cu.user_id = u.id
+      LEFT JOIN company_users cu2 ON l.created_by_company_user_id = cu2.id
+      LEFT JOIN users u2 ON cu2.user_id = u2.id
       WHERE l.company_id = $1
     `;
     const values: any[] = [params.companyId];
@@ -108,11 +111,13 @@ export class LeadsRepository {
 
   async findById(id: string, companyId: string): Promise<Lead | undefined> {
     const query = `
-      SELECT l.*, s.name as shop_name, u.full_name as assigned_rep_name
+      SELECT l.*, s.name as shop_name, u.full_name as assigned_rep_name, u2.full_name as created_by_name
       FROM leads l
       LEFT JOIN shops s ON l.shop_id = s.id
       LEFT JOIN company_users cu ON l.assigned_rep_company_user_id = cu.id
       LEFT JOIN users u ON cu.user_id = u.id
+      LEFT JOIN company_users cu2 ON l.created_by_company_user_id = cu2.id
+      LEFT JOIN users u2 ON cu2.user_id = u2.id
       WHERE l.id = $1 AND l.company_id = $2
     `;
     const result = await this.db.query(query, [id, companyId]);
