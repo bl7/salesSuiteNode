@@ -291,6 +291,7 @@ export class OrderRepository {
               o.id, o.company_id, o.order_number, o.shop_id, o.lead_id, 
               o.placed_by_company_user_id, o.status, o.total_amount, 
               o.discount_amount, o.discount_type,
+              (SELECT COALESCE(SUM(quantity * unit_price), 0) FROM order_items WHERE order_id = o.id) as subtotal,
               o.currency_code, o.notes, o.placed_at, o.processed_at, 
               o.shipped_at, o.closed_at, o.cancelled_at, o.cancel_reason, 
               o.cancel_note, o.created_at, o.updated_at,
