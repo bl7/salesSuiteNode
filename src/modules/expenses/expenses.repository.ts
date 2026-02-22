@@ -106,6 +106,50 @@ export class ExpenseRepository {
     const result = await this.db.query(query, values);
     return result.rows;
   }
+
+  async findById(id: string): Promise<Expense | undefined> {
+    const query = `SELECT * FROM expenses WHERE id = $1`;
+    const result = await this.db.query(query, [id]);
+    return result.rows[0];
+  }
+
+  async update(id: string, data: {
+    amount?: number;
+    category?: string;
+    description?: string;
+  }): Promise<Expense> {
+    const fields: string[] = [];
+    const values: any[] = [];
+    let idx = 1;
+
+    if (data.amount !== undefined) {
+      fields.push(`amount = $${idx++}`);
+      values.push(data.amount);
+    }
+    if (data.category !== undefined) {
+      fields.push(`category = $${idx++}`);
+      values.push(data.category);
+    }
+    if (data.description !== undefined) {
+      fields.push(`description = $${idx++}`);
+      values.push(data.description);
+    }
+
+    values.push(id);
+    const query = `
+      UPDATE expenses 
+      SET ${fields.join(', ')}
+      WHERE id = $${idx}
+      RETURNING *
+    `;
+    const result = await this.db.query(query, values);
+    return result.rows[0];
+  }
+
+  async delete(id: string): Promise<void> {
+    await this.db.query('DELETE FROM expenses WHERE id = $1', [id]);
+  }
 }
+
 
 export const expenseRepository = new ExpenseRepository();

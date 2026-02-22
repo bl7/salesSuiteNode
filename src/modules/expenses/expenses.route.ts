@@ -1,6 +1,6 @@
 import { FastifyInstance } from 'fastify';
 import { ZodTypeProvider } from 'fastify-type-provider-zod';
-import { createExpensesBulkSchema, listExpensesQuerySchema } from './expenses.schema';
+import { createExpensesBulkSchema, listExpensesQuerySchema, createExpenseSchema } from './expenses.schema';
 import { expenseRepository } from './expenses.repository';
 
 export async function expensesRoutes(app: FastifyInstance) {
@@ -17,27 +17,79 @@ export async function expensesRoutes(app: FastifyInstance) {
     const { companyId, companyUserId } = req.user;
 
     const results = await expenseRepository.createBulk(companyId, companyUserId, expenses);
-    return { ok: true, data: { expenses: results } };
+    return { ok: true, expenses: results };
   });
 
-  // List expenses (Manager view)
+
+  // List expenses (Manager view / Rep view)
   typedApp.get('/', {
     schema: {
       querystring: listExpensesQuerySchema,
     },
     preHandler: [app.authenticate],
   }, async (req, reply) => {
-    const { companyId } = req.user;
+    const { companyId, role, companyUserId } = req.user;
     const { rep, date_from, date_to, category } = req.query;
+
+    // Security: If not a manager/boss, only allowed to see own expenses
+    let targetRepId = rep;
+    if (role !== 'manager' && role !== 'boss') {
+      targetRepId = companyUserId;
+    }
 
     const expenses = await expenseRepository.findAll({
       companyId,
-      repCompanyUserId: rep,
+      repCompanyUserId: targetRepId,
       dateFrom: date_from,
       dateTo: date_to,
       category,
     });
 
-    return { ok: true, data: { expenses } };
+    return { ok: true, expenses };
+  });
+
+
+  // Delete expense
+  typedApp.delete('/:id', {
+    preHandler: [app.authenticate],
+  }, async (req, reply) => {
+    const { id } = req.params as { id: string };
+    const { companyId, companyUserId, role } = req.user;
+
+    const expense = await expenseRepository.findById(id);
+    if (!expense) return reply.status(404).send({ message: 'Expense not found' });
+    
+    // Security check
+    if (expense.company_id !== companyId) return reply.status(403).send({ message: 'Forbidden' });
+    if (role !== 'manager' && role !== 'boss' && expense.rep_company_user_id !== companyUserId) {
+      return reply.status(403).send({ message: 'Forbidden' });
+    }
+
+    await expenseRepository.delete(id);
+    return { ok: true };
+  });
+
+  // Update expense
+  typedApp.patch('/:id', {
+    schema: {
+      body: createExpenseSchema.partial(),
+    },
+    preHandler: [app.authenticate],
+  }, async (req, reply) => {
+    const { id } = req.params as { id: string };
+    const { companyId, companyUserId, role } = req.user;
+
+    const expense = await expenseRepository.findById(id);
+    if (!expense) return reply.status(404).send({ message: 'Expense not found' });
+
+    // Security check
+    if (expense.company_id !== companyId) return reply.status(403).send({ message: 'Forbidden' });
+    if (role !== 'manager' && role !== 'boss' && expense.rep_company_user_id !== companyUserId) {
+      return reply.status(403).send({ message: 'Forbidden' });
+    }
+
+    const updated = await expenseRepository.update(id, req.body);
+    return { ok: true, data: { expense: updated } };
   });
 }
+
