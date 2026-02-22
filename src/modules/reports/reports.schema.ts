@@ -116,8 +116,8 @@ export const staffReportItemSchema = z.object({
   driving_ms: z.coerce.number(),
   still_ms: z.coerce.number().optional(),
   distance_km: z.coerce.number(),
-  last_clock_in: z.string().nullable().optional(),
-  last_clock_out: z.string().nullable().optional(),
+  last_clock_in: z.coerce.date().nullable().optional(),
+  last_clock_out: z.coerce.date().nullable().optional(),
   is_on_duty: z.boolean().optional(),
 });
 
