@@ -35,6 +35,7 @@ export const orderSchema = z.object({
   cancel_reason: z.string().nullable(),
   cancel_note: z.string().nullable(),
   items_count: z.union([z.number(), z.string()]).optional(), // joined
+  subtotal: z.union([z.number(), z.string()]).optional(), // joined
   items: z.array(orderItemSchema).optional() // for details
 });
 
@@ -60,6 +61,8 @@ export const createOrderSchema = z.object({
 export const updateOrderSchema = z.object({
   status: z.enum(['received', 'processing', 'shipped', 'closed']).optional(),
   notes: z.string().optional(),
+  discountAmount: z.number().min(0).optional(),
+  discountType: z.enum(['fixed', 'percentage']).optional(),
   items: z.array(createOrderItemSchema).optional()
 });
 

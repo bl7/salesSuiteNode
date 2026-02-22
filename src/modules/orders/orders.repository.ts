@@ -257,7 +257,8 @@ export class OrderRepository {
   }): Promise<Order[]> {
       let query = `
           SELECT o.*, s.name as shop_name, s.address as shop_address, u.full_name as placed_by_name,
-                 (SELECT count(*)::int FROM order_items oi WHERE oi.order_id = o.id) as items_count
+                 (SELECT count(*)::int FROM order_items oi WHERE oi.order_id = o.id) as items_count,
+                 (SELECT COALESCE(SUM(line_total), 0)::numeric FROM order_items oi WHERE oi.order_id = o.id) as subtotal
           FROM orders o
           LEFT JOIN shops s ON o.shop_id = s.id
           LEFT JOIN company_users cu ON o.placed_by_company_user_id = cu.id
@@ -289,6 +290,7 @@ export class OrderRepository {
           SELECT 
               o.id, o.company_id, o.order_number, o.shop_id, o.lead_id, 
               o.placed_by_company_user_id, o.status, o.total_amount, 
+              o.discount_amount, o.discount_type,
               o.currency_code, o.notes, o.placed_at, o.processed_at, 
               o.shipped_at, o.closed_at, o.cancelled_at, o.cancel_reason, 
               o.cancel_note, o.created_at, o.updated_at,
