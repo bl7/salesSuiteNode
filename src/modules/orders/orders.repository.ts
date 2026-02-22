@@ -19,6 +19,9 @@ export interface Order {
   cancel_reason: string | null;
   cancel_note: string | null;
   notes: string | null;
+  discount_amount: number;
+  discount_type: 'fixed' | 'percentage';
+
   // Joined
   shop_name?: string | null;
   shop_address?: string | null;
@@ -36,7 +39,10 @@ export class OrderRepository {
       shopId?: string | null;
       leadId?: string | null;
       notes?: string;
+      discountAmount?: number;
+      discountType?: 'fixed' | 'percentage';
       items: {
+
           productId: string;
           productName: string;
           productSku: string;
@@ -56,18 +62,30 @@ export class OrderRepository {
           const randomSuffix = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
           const orderNumber = `ORD-${dateStr}-${randomSuffix}`;
 
-          const totalAmount = data.items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
+          const subtotal = data.items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
+          const discountAmount = data.discountAmount || 0;
+          const discountType = data.discountType || 'fixed';
+          
+          let totalAmount = subtotal;
+          if (discountType === 'percentage') {
+              totalAmount = subtotal - (subtotal * (discountAmount / 100));
+          } else {
+              totalAmount = subtotal - discountAmount;
+          }
 
           const insertOrderQuery = `
               INSERT INTO orders (
-                  company_id, order_number, shop_id, lead_id, placed_by_company_user_id, status, notes, total_amount, currency_code, placed_at
+                  company_id, order_number, shop_id, lead_id, placed_by_company_user_id, status, notes, total_amount, currency_code, placed_at,
+                  discount_amount, discount_type
               )
-              VALUES ($1, $2, $3, $4, $5, 'received', $6, $7, 'NPR', NOW())
+              VALUES ($1, $2, $3, $4, $5, 'received', $6, $7, 'NPR', NOW(), $8, $9)
               RETURNING *
           `;
           const orderRes = await dbClient.query(insertOrderQuery, [
-              data.companyId, orderNumber, data.shopId, data.leadId, data.placedByCompanyUserId, data.notes, totalAmount
+              data.companyId, orderNumber, data.shopId, data.leadId, data.placedByCompanyUserId, data.notes, totalAmount,
+              discountAmount, discountType
           ]);
+
           const order = orderRes.rows[0];
 
           // Insert items
@@ -111,17 +129,20 @@ export class OrderRepository {
       }[];
       notes?: string;
       status?: 'received' | 'processing' | 'shipped' | 'closed';
+      discountAmount?: number;
+      discountType?: 'fixed' | 'percentage';
   }): Promise<Order> {
+
     const client = await this.db.connect();
     try {
         await client.query('BEGIN');
 
         // Update main order fields
-        if (data.notes !== undefined || data.status !== undefined) {
+        if (data.notes !== undefined || data.status !== undefined || data.discountAmount !== undefined || data.discountType !== undefined) {
              const updates: string[] = [];
              const values: any[] = [];
              let idx = 1;
-
+ 
              if (data.notes !== undefined) {
                  updates.push(`notes = $${idx++}`);
                  values.push(data.notes);
@@ -130,7 +151,15 @@ export class OrderRepository {
                  updates.push(`status = $${idx++}`);
                  values.push(data.status);
              }
-
+             if (data.discountAmount !== undefined) {
+                 updates.push(`discount_amount = $${idx++}`);
+                 values.push(data.discountAmount);
+             }
+             if (data.discountType !== undefined) {
+                 updates.push(`discount_type = $${idx++}`);
+                 values.push(data.discountType);
+             }
+ 
              if (updates.length > 0) {
                  values.push(id, companyId);
                  await client.query(`
@@ -140,6 +169,7 @@ export class OrderRepository {
                  `, values);
              }
         }
+
 
         // Update Items (Full Replace Strategy for simplicity)
         if (data.items) {
@@ -165,11 +195,43 @@ export class OrderRepository {
                  insertedItems.push(itemRes.rows[0]);
             }
 
-            // 3. Update Order Total
+            // 3. Update Order Total (with discount)
+            const currentOrder = await client.query('SELECT discount_amount, discount_type FROM orders WHERE id = $1', [id]);
+            const dAmount = data.discountAmount ?? parseFloat(currentOrder.rows[0].discount_amount || '0');
+            const dType = data.discountType ?? currentOrder.rows[0].discount_type;
+
+            let finalTotal = newTotal;
+            if (dType === 'percentage') {
+                finalTotal = newTotal - (newTotal * (dAmount / 100));
+            } else {
+                finalTotal = newTotal - dAmount;
+            }
+
             await client.query(`
                 UPDATE orders SET total_amount = $1 WHERE id = $2 AND company_id = $3
-            `, [newTotal, id, companyId]);
+            `, [finalTotal, id, companyId]);
+        } else if (data.discountAmount !== undefined || data.discountType !== undefined) {
+            // Only discount changed, need to recalculate total from existing items
+            const itemsRes = await client.query('SELECT SUM(line_total) as subtotal FROM order_items WHERE order_id = $1', [id]);
+            const subtotal = parseFloat(itemsRes.rows[0].subtotal || '0');
+            
+            const currentOrder = await client.query('SELECT discount_amount, discount_type FROM orders WHERE id = $1', [id]);
+            const dAmount = data.discountAmount ?? parseFloat(currentOrder.rows[0].discount_amount || '0');
+            const dType = data.discountType ?? currentOrder.rows[0].discount_type;
+
+            let finalTotal = subtotal;
+            if (dType === 'percentage') {
+                finalTotal = subtotal - (subtotal * (dAmount / 100));
+            } else {
+                finalTotal = subtotal - dAmount;
+            }
+
+            await client.query(`
+                UPDATE orders SET total_amount = $1 WHERE id = $2 AND company_id = $3
+            `, [finalTotal, id, companyId]);
         }
+
+
 
         await client.query('COMMIT');
 

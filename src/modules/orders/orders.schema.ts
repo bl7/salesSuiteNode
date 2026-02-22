@@ -24,7 +24,10 @@ export const orderSchema = z.object({
   notes: z.string().nullable(),
   total_amount: z.union([z.number(), z.string()]),
   currency_code: z.string(),
+  discount_amount: z.union([z.number(), z.string()]).optional(),
+  discount_type: z.enum(['fixed', 'percentage']).optional(),
   placed_at: z.date(),
+
   processed_at: z.date().nullable(),
   shipped_at: z.date().nullable(),
   closed_at: z.date().nullable(),
@@ -48,8 +51,11 @@ export const createOrderSchema = z.object({
   shopId: z.string().uuid().nullable().optional(),
   leadId: z.string().uuid().nullable().optional(),
   notes: z.string().optional(),
+  discountAmount: z.number().optional(),
+  discountType: z.enum(['fixed', 'percentage']).optional(),
   items: z.array(createOrderItemSchema).min(1),
 });
+
 
 export const updateOrderSchema = z.object({
   status: z.enum(['received', 'processing', 'shipped', 'closed']).optional(),
