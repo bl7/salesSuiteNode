@@ -357,5 +357,21 @@ export class OrderRepository {
       cancelled: parseInt(row.cancelled || '0')
     };
   }
+
+  async getPickingList(companyId: string): Promise<{ product_id: string, product_name: string, product_sku: string, total_quantity: number }[]> {
+    const query = `
+      SELECT oi.product_id, oi.product_name, oi.product_sku, SUM(oi.quantity)::numeric as total_quantity
+      FROM order_items oi
+      JOIN orders o ON oi.order_id = o.id
+      WHERE o.company_id = $1 AND o.status = 'processing'
+      GROUP BY oi.product_id, oi.product_name, oi.product_sku
+      ORDER BY oi.product_name ASC
+    `;
+    const result = await this.db.query(query, [companyId]);
+    return result.rows.map(r => ({
+      ...r,
+      total_quantity: parseFloat(r.total_quantity || '0')
+    }));
+  }
 }
 export const orderRepository = new OrderRepository();

@@ -80,6 +80,32 @@ export async function ordersRoutes(app: FastifyInstance) {
         return { ok: true, counts };
     });
 
+    // Picking List
+    app.withTypeProvider<ZodTypeProvider>().get('/picking-list', {
+        schema: {
+            response: {
+                200: z.object({ 
+                    ok: z.boolean(), 
+                    items: z.array(z.object({
+                        product_id: z.string().uuid().nullable(),
+                        product_name: z.string(),
+                        product_sku: z.string().nullable(),
+                        total_quantity: z.number()
+                    })) 
+                }),
+                401: z.object({ message: z.string() })
+            }
+        }
+    }, async (request, reply) => {
+        const { user } = request;
+        const { authService } = await import('../auth/auth.service');
+        const context = await authService.getContext(user.userId);
+        if (!context) return reply.code(401).send({ message: 'Unauthorized' } as any);
+
+        const items = await orderRepository.getPickingList(context.company.id);
+        return { ok: true, items };
+    });
+
     // Create Order
     app.withTypeProvider<ZodTypeProvider>().post('/', {
         schema: {
