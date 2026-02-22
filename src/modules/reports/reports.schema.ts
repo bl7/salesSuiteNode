@@ -114,7 +114,11 @@ export const staffReportItemSchema = z.object({
   expenses_sum: z.number(),
   walking_ms: z.coerce.number(),
   driving_ms: z.coerce.number(),
+  still_ms: z.coerce.number().optional(),
   distance_km: z.coerce.number(),
+  last_clock_in: z.string().nullable().optional(),
+  last_clock_out: z.string().nullable().optional(),
+  is_on_duty: z.boolean().optional(),
 });
 
 export const staffReportResponseSchema = z.object({

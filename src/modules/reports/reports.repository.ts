@@ -308,9 +308,21 @@ export class ReportsRepository {
         COALESCE(e_counts.expenses_sum, 0)::float as expenses_sum,
         COALESCE(act.walking_ms, 0)::bigint as walking_ms,
         COALESCE(act.driving_ms, 0)::bigint as driving_ms,
-        COALESCE(act.distance_km, 0)::float as distance_km
+        COALESCE(act.still_ms, 0)::bigint as still_ms,
+        COALESCE(act.distance_km, 0)::float as distance_km,
+        al.clock_in_at as last_clock_in,
+        al.clock_out_at as last_clock_out,
+        (al.clock_in_at IS NOT NULL AND al.clock_out_at IS NULL) as is_on_duty
       FROM company_users cu
       JOIN users u ON cu.user_id = u.id
+      -- Latest attendance log
+      LEFT JOIN LATERAL (
+        SELECT clock_in_at, clock_out_at
+        FROM attendance_logs
+        WHERE rep_company_user_id = cu.id
+        ORDER BY clock_in_at DESC
+        LIMIT 1
+      ) al ON true
       LEFT JOIN (
         SELECT placed_by_company_user_id, COUNT(*) as orders_count, SUM(total_amount) as total_sales
         FROM orders
@@ -350,6 +362,7 @@ export class ReportsRepository {
           rep_company_user_id, 
           SUM(walking_duration_ms) as walking_ms, 
           SUM(driving_duration_ms) as driving_ms, 
+          SUM(still_duration_ms) as still_ms,
           SUM(total_distance_km) as distance_km
         FROM staff_activity_logs
         WHERE company_id = $1 AND date >= $2 AND date <= $3
@@ -430,5 +443,9 @@ export interface StaffReportItem {
   expenses_sum: number;
   walking_ms: number;
   driving_ms: number;
+  still_ms: number;
   distance_km: number;
+  last_clock_in?: string | null;
+  last_clock_out?: string | null;
+  is_on_duty?: boolean;
 }
