@@ -15,7 +15,8 @@ export const createExpensesBulkSchema = z.object({
 
 export const listExpensesQuerySchema = z.object({
   rep: z.string().uuid().optional(),
-  date_from: z.string().datetime().optional(),
-  date_to: z.string().datetime().optional(),
+  date_from: z.string().optional(),
+  date_to: z.string().optional(),
   category: expenseCategorySchema.optional(),
 });
+

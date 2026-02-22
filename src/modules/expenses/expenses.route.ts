@@ -13,12 +13,18 @@ export async function expensesRoutes(app: FastifyInstance) {
     },
     preHandler: [app.authenticate],
   }, async (req, reply) => {
+    const { authService } = await import('../auth/auth.service');
+    const context = await authService.getContext(req.user.userId);
+    if (!context) return reply.status(401).send({ message: 'Unauthorized' });
+
     const { expenses } = req.body;
-    const { companyId, companyUserId } = req.user;
+    const { companyUserId } = context.user;
+    const companyId = context.company.id;
 
     const results = await expenseRepository.createBulk(companyId, companyUserId, expenses);
     return { ok: true, expenses: results };
   });
+
 
 
   // List expenses (Manager view / Rep view)
@@ -28,7 +34,13 @@ export async function expensesRoutes(app: FastifyInstance) {
     },
     preHandler: [app.authenticate],
   }, async (req, reply) => {
-    const { companyId, role, companyUserId } = req.user;
+    const { authService } = await import('../auth/auth.service');
+    const context = await authService.getContext(req.user.userId);
+    if (!context) return reply.status(401).send({ message: 'Unauthorized' });
+
+    const { id: companyId } = context.company;
+    const { role, companyUserId } = context.user;
+
     const { rep, date_from, date_to, category } = req.query;
 
     // Security: If not a manager/boss, only allowed to see own expenses
@@ -49,18 +61,25 @@ export async function expensesRoutes(app: FastifyInstance) {
   });
 
 
+
   // Delete expense
   typedApp.delete('/:id', {
     preHandler: [app.authenticate],
   }, async (req, reply) => {
     const { id } = req.params as { id: string };
-    const { companyId, companyUserId, role } = req.user;
+    const { authService } = await import('../auth/auth.service');
+    const context = await authService.getContext(req.user.userId);
+    if (!context) return reply.status(401).send({ message: 'Unauthorized' });
+
+    const { id: companyId } = context.company;
+    const { role, companyUserId } = context.user;
 
     const expense = await expenseRepository.findById(id);
     if (!expense) return reply.status(404).send({ message: 'Expense not found' });
     
     // Security check
     if (expense.company_id !== companyId) return reply.status(403).send({ message: 'Forbidden' });
+
     if (role !== 'manager' && role !== 'boss' && expense.rep_company_user_id !== companyUserId) {
       return reply.status(403).send({ message: 'Forbidden' });
     }
@@ -77,13 +96,19 @@ export async function expensesRoutes(app: FastifyInstance) {
     preHandler: [app.authenticate],
   }, async (req, reply) => {
     const { id } = req.params as { id: string };
-    const { companyId, companyUserId, role } = req.user;
+    const { authService } = await import('../auth/auth.service');
+    const context = await authService.getContext(req.user.userId);
+    if (!context) return reply.status(401).send({ message: 'Unauthorized' });
+
+    const { id: companyId } = context.company;
+    const { role, companyUserId } = context.user;
 
     const expense = await expenseRepository.findById(id);
     if (!expense) return reply.status(404).send({ message: 'Expense not found' });
 
     // Security check
     if (expense.company_id !== companyId) return reply.status(403).send({ message: 'Forbidden' });
+
     if (role !== 'manager' && role !== 'boss' && expense.rep_company_user_id !== companyUserId) {
       return reply.status(403).send({ message: 'Forbidden' });
     }
