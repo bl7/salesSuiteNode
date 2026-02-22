@@ -242,8 +242,14 @@ export class OrderRepository {
       const order = result.rows[0];
       if (order) {
           // Get items
-          const itemsRes = await this.db.query('SELECT * FROM order_items WHERE order_id = $1', [id]);
+          const itemsRes = await this.db.query(`
+              SELECT oi.*, p.unit 
+              FROM order_items oi
+              LEFT JOIN products p ON oi.product_id = p.id
+              WHERE oi.order_id = $1
+          `, [id]);
           order.items = itemsRes.rows;
+
       }
       return order;
   }
