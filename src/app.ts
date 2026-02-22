@@ -23,8 +23,10 @@ import { profileRoutes } from './modules/profile/profile.route';
 import { contactRoutes } from './modules/contact/contact.route';
 import { reportsRoutes } from './modules/reports/reports.route';
 import { regionsRoutes } from './modules/regions/regions.route';
+import { expensesRoutes } from './modules/expenses/expenses.route';
 
 export async function buildApp(): Promise<FastifyInstance> {
+
   const app = Fastify({
     logger: {
       transport: env.NODE_ENV === 'development' ? {
@@ -80,6 +82,8 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(staffRoutes, { prefix: '/api/manager/staff' });
   await app.register(reportsRoutes, { prefix: '/api/manager/reports' });
   await app.register(regionsRoutes, { prefix: '/api/manager/regions' });
+  await app.register(expensesRoutes, { prefix: '/api/manager/expenses' });
+
 
   // Profile
   await app.register(profileRoutes, { prefix: '/api/profile' });
