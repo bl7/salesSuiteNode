@@ -24,6 +24,7 @@ import { contactRoutes } from './modules/contact/contact.route';
 import { reportsRoutes } from './modules/reports/reports.route';
 import { regionsRoutes } from './modules/regions/regions.route';
 import { expensesRoutes } from './modules/expenses/expenses.route';
+import { activityRoutes } from './modules/activity/activity.route';
 
 export async function buildApp(): Promise<FastifyInstance> {
 
@@ -91,6 +92,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(reportsRoutes, { prefix: '/api/manager/reports' });
   await app.register(regionsRoutes, { prefix: '/api/manager/regions' });
   await app.register(expensesRoutes, { prefix: '/api/manager/expenses' });
+  await app.register(activityRoutes, { prefix: '/api/manager/activity' });
 
 
   // Profile

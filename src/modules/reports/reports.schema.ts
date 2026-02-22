@@ -112,6 +112,9 @@ export const staffReportItemSchema = z.object({
   compliance_count: z.number(),
   compliance_approved_count: z.number(),
   expenses_sum: z.number(),
+  walking_ms: z.coerce.number(),
+  driving_ms: z.coerce.number(),
+  distance_km: z.coerce.number(),
 });
 
 export const staffReportResponseSchema = z.object({

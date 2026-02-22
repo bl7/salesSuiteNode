@@ -305,7 +305,10 @@ export class ReportsRepository {
         COALESCE(v_counts.visit_count, 0)::int as visit_count,
         COALESCE(v_counts.compliance_count, 0)::int as compliance_count,
         COALESCE(v_counts.compliance_approved_count, 0)::int as compliance_approved_count,
-        COALESCE(e_counts.expenses_sum, 0)::float as expenses_sum
+        COALESCE(e_counts.expenses_sum, 0)::float as expenses_sum,
+        COALESCE(act.walking_ms, 0)::bigint as walking_ms,
+        COALESCE(act.driving_ms, 0)::bigint as driving_ms,
+        COALESCE(act.distance_km, 0)::float as distance_km
       FROM company_users cu
       JOIN users u ON cu.user_id = u.id
       LEFT JOIN (
@@ -342,6 +345,16 @@ export class ReportsRepository {
         WHERE company_id = $1 AND date >= $2 AND date <= $3
         GROUP BY rep_company_user_id
       ) e_counts ON e_counts.rep_company_user_id = cu.id
+      LEFT JOIN (
+        SELECT 
+          rep_company_user_id, 
+          SUM(walking_duration_ms) as walking_ms, 
+          SUM(driving_duration_ms) as driving_ms, 
+          SUM(total_distance_km) as distance_km
+        FROM staff_activity_logs
+        WHERE company_id = $1 AND date >= $2 AND date <= $3
+        GROUP BY rep_company_user_id
+      ) act ON act.rep_company_user_id = cu.id
       WHERE cu.company_id = $1 AND cu.role = 'rep' AND cu.status = 'active'
       ORDER BY total_sales DESC
     `;
@@ -415,4 +428,7 @@ export interface StaffReportItem {
   compliance_count: number;
   compliance_approved_count: number;
   expenses_sum: number;
+  walking_ms: number;
+  driving_ms: number;
+  distance_km: number;
 }
