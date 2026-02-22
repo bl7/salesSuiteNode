@@ -26,7 +26,8 @@ export async function attendanceRoutes(app: FastifyInstance) {
       response: {
         201: z.object({ ok: z.boolean(), log: attendanceLogResponseSchema }),
         400: z.object({ message: z.string() }),
-        401: z.object({ message: z.string() })
+        401: z.object({ message: z.string() }),
+        403: z.object({ message: z.string() })
       }
     }
   }, async (request, reply) => {
@@ -39,6 +40,13 @@ export async function attendanceRoutes(app: FastifyInstance) {
     const activeLog = await attendanceRepository.findActiveLog(context.user.companyUserId);
     if (activeLog) {
       return reply.code(400).send({ message: 'Already clocked in' });
+    }
+
+    const { disclosuresRepository } = await import('../disclosures/disclosures.repository');
+    const POLICY_VERSION = '1.0';
+    const disclosure = await disclosuresRepository.getDisclosure(user.userId, POLICY_VERSION);
+    if (!disclosure || !disclosure.disclosure_acknowledged) {
+      return reply.code(403).send({ message: 'Work tracking disclosure required.' });
     }
 
     const log = await attendanceRepository.create({
