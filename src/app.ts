@@ -1,4 +1,4 @@
-import Fastify, { FastifyInstance, FastifyError } from 'fastify';
+import Fastify, { FastifyInstance, FastifyError, FastifyRequest, FastifyReply } from 'fastify';
 import { ZodTypeProvider, serializerCompiler, validatorCompiler } from 'fastify-type-provider-zod';
 import fjwt from '@fastify/jwt';
 import fenv from '@fastify/env';
@@ -58,6 +58,14 @@ export async function buildApp(): Promise<FastifyInstance> {
       cookieName: 'kora_session',
       signed: false,
     },
+  });
+
+  app.decorate('authenticate', async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
+      await request.jwtVerify();
+    } catch (err) {
+      reply.send(err);
+    }
   });
 
   // Register Application Routes
