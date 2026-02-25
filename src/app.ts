@@ -26,7 +26,7 @@ import { regionsRoutes } from './modules/regions/regions.route';
 import { expensesRoutes } from './modules/expenses/expenses.route';
 import { activityRoutes } from './modules/activity/activity.route';
 import { disclosuresRoutes } from './modules/disclosures/disclosures.route';
-
+import { bossRoutes } from './modules/boss/boss.route';
 export async function buildApp(): Promise<FastifyInstance> {
 
   const app = Fastify({
@@ -96,6 +96,8 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(activityRoutes, { prefix: '/api/manager/activity' });
   await app.register(disclosuresRoutes, { prefix: '/api/manager/disclosures' });
 
+  // Boss Routes
+  await app.register(bossRoutes, { prefix: '/api/boss' });
 
   // Profile
   await app.register(profileRoutes, { prefix: '/api/profile' });
