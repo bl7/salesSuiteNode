@@ -130,11 +130,11 @@ export async function authRoutes(app: FastifyInstance) {
   }, async (request, reply) => {
       try {
         await authService.verifyEmail(request.query.token);
-        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+        const frontendUrl = process.env.FRONTEND_URL || 'https://kora-sand.vercel.app';
         return reply.redirect(`${frontendUrl}/auth/login?verified=true`);
       } catch (e) {
          // Redirect to error page?
-         const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+         const frontendUrl = process.env.FRONTEND_URL || 'https://kora-sand.vercel.app';
          return reply.redirect(`${frontendUrl}/auth/login?error=verification_failed`);
       }
   });
