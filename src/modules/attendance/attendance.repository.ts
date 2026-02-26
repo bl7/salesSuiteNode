@@ -66,6 +66,20 @@ export class AttendanceRepository {
     return result.rows[0];
   }
 
+  async autoClockOutAll(): Promise<number> {
+    const query = `
+      UPDATE attendance_logs
+      SET clock_out_at = NOW(),
+          notes = CASE 
+                    WHEN notes IS NULL OR notes = '' THEN 'Auto clocked out by system'
+                    ELSE notes || ' | Auto clocked out by system'
+                  END
+      WHERE clock_out_at IS NULL
+    `;
+    const result = await this.db.query(query);
+    return result.rowCount ?? 0;
+  }
+
   async findAll(params: {
     companyId: string;
     repCompanyUserId?: string;

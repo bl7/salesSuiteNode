@@ -83,12 +83,22 @@ export async function bossRoutes(app: FastifyInstance) {
   app.withTypeProvider<ZodTypeProvider>().get('/auth/me', {
     onRequest: [async (request, reply) => {
       try {
-        await request.jwtVerify();
+        console.log('Incoming cookies for /auth/me:', request.cookies);
+        const token = request.cookies['kora_boss_session'];
+        if (!token) {
+          reply.code(401).send({ message: 'No boss session token', statusCode: 401 });
+          return;
+        }
+        
+        const decoded: any = app.jwt.verify(token);
+        request.user = decoded;
+
         if (request.user.sub !== 'boss' && !request.user.bossId) {
-            throw new Error('Not a boss token');
+            reply.code(401).send({ message: 'Not a boss token', statusCode: 401 });
+            return;
         }
       } catch (err: any) {
-        reply.code(401).send(err);
+        reply.code(401).send({ message: err.message || 'Unauthorized', statusCode: 401 });
       }
     }],
     schema: {

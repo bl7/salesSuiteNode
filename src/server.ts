@@ -1,9 +1,13 @@
 import { buildApp } from './app';
 import { env } from './config/env';
 import { pool } from './db/pool';
+import { startAttendanceCronJobs } from './jobs/attendance.job';
 
 async function main() {
   const app = await buildApp();
+  
+  // Start scheduled jobs
+  startAttendanceCronJobs();
 
   try {
     await app.listen({ port: env.PORT, host: '0.0.0.0' });
