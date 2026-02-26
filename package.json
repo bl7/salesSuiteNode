@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "start": "node dist/server.js",
-    "build": "tsc",
+    "build": "node --max-old-space-size=1024 ./node_modules/.bin/tsc",
     "migrate": "tsx scripts/migrate.ts"
   },
   "keywords": [],
